@@ -105,9 +105,6 @@ func loadHandlerModule(hub *hub, conf *handlerConfig, path string, meta toml.Met
 	if err != nil {
 		return fmt.Errorf("failed to load handler config: %s: %s", path, err.Error())
 	}
-	if len(meta.Undecoded()) > 0 {
-		return fmt.Errorf("failed to load handler config: %s: unknown field %s", path, meta.Undecoded()[0])
-	}
 	filters := []filter.Filter{}
 
 	for _, cfg := range conf.Filter {
@@ -121,6 +118,9 @@ func loadHandlerModule(hub *hub, conf *handlerConfig, path string, meta toml.Met
 	hub.registerHandlerRunner(func() *handler.Runner {
 		return handler.NewRunner(hdl, filters)
 	})
+	if len(meta.Undecoded()) > 0 {
+		return fmt.Errorf("failed to load handler config: %s: unknown field %s", path, meta.Undecoded()[0])
+	}
 	return nil
 }
 
