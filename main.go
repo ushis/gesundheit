@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/ushis/gesundheit/check/http-json"
 	_ "github.com/ushis/gesundheit/check/mtime"
 	_ "github.com/ushis/gesundheit/filter/office-hours"
 	_ "github.com/ushis/gesundheit/filter/result-change"

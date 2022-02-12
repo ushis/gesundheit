@@ -82,24 +82,38 @@ gesundheit -confdir /etc/gesundheit
       <th>Description</th>
       <th>Config</th>
       <th>Config Description</th>
-      <th>Default</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td rowspan="2"><strong>mtime</strong></td>
-      <td rowspan="2">check mtime of a <em>file<em></td>
+      <td rowspan="2">check mtime of a file</td>
       <td>Path</td>
-      <td>Path to <em>file<em></td>
-      <td></td>
+      <td>Path to file</td>
     </tr>
     <tr>
       <td>MaxAge</td>
       <td>
-        Max age of the <em>file</em> for beeing considered healthy,
+        Max age of the file for beeing considered healthy,
         e.g. <code>"1h5m10s"</code>
       </td>
-      <td></td>
+    </tr>
+    <tr>
+      <td rowspan="3"><strong>http-json</strong></td>
+      <td rowspan="3">check json value in http response</td>
+      <td>Url</td>
+      <td>Url used to request the json document</td>
+    </tr>
+    <tr>
+      <td>Query</td>
+      <td>
+        <a href="https://stedolan.github.io/jq/">jq</a> compatible query string,
+        e.g. <code>".status"</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Value</td>
+      <td>Expected value</td>
     </tr>
   </tbody>
 </table>
@@ -163,14 +177,12 @@ gesundheit -confdir /etc/gesundheit
       <th>Description</th>
       <th>Config</th>
       <th>Config Description</th>
-      <th>Default</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><strong>result-change</strong></td>
       <td>filter changed check results</td>
-      <td></td>
       <td></td>
       <td></td>
     </tr>
@@ -182,7 +194,6 @@ gesundheit -confdir /etc/gesundheit
         List of time spans, e.g.<br/>
         <code>[{From = "9:00", To = "17:00"}]</code>
       </td>
-      <td></td>
     </tr>
   </tbody>
 </table>

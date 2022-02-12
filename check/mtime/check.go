@@ -40,7 +40,7 @@ func (c Check) Exec() (string, error) {
 	info, err := os.Stat(c.Path)
 
 	if err != nil {
-		return "", fmt.Errorf("could not stat %s: %s", c.Path, err)
+		return "", fmt.Errorf("failed to stat %s: %s", c.Path, err)
 	}
 	age := time.Since(info.ModTime()).Truncate(time.Second)
 
