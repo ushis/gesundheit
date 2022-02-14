@@ -43,22 +43,12 @@ func (r *Runner) Run() {
 	ticker := time.NewTicker(interval)
 
 	for {
-		if msg, err := r.check.Exec(); err != nil {
-			r.events <- Event{
-				Result:           FAIL,
-				Message:          err.Error(),
-				CheckDescription: r.description,
-				CheckHistory:     r.history,
-			}
-			r.history = (r.history << 1) | FAIL
-		} else {
-			r.events <- Event{
-				Result:           OK,
-				Message:          msg,
-				CheckDescription: r.description,
-				CheckHistory:     r.history,
-			}
-			r.history = (r.history << 1) | OK
+		select {
+		case r.events <- r.exec():
+		case <-r.stop:
+			ticker.Stop()
+			r.wg.Done()
+			return
 		}
 		select {
 		case <-ticker.C:
@@ -68,6 +58,27 @@ func (r *Runner) Run() {
 			return
 		}
 	}
+}
+
+func (r *Runner) exec() (event Event) {
+	if msg, err := r.check.Exec(); err != nil {
+		event = Event{
+			Result:           FAIL,
+			Message:          err.Error(),
+			CheckDescription: r.description,
+			CheckHistory:     r.history,
+		}
+		r.history = (r.history << 1) | FAIL
+	} else {
+		event = Event{
+			Result:           OK,
+			Message:          msg,
+			CheckDescription: r.description,
+			CheckHistory:     r.history,
+		}
+		r.history = (r.history << 1) | OK
+	}
+	return event
 }
 
 func (r *Runner) Stop() {
