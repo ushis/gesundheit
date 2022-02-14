@@ -113,6 +113,16 @@ gesundheit -confdir /etc/gesundheit
       <td>Expected value</td>
     </tr>
     <tr>
+      <td rowspan="2"><strong>http-status</strong></td>
+      <td rowspan="2">check status of http response</td>
+      <td>Url</td>
+      <td>Url to request</td>
+    </tr>
+    <tr>
+      <td>Status</td>
+      <td>Status code considered healthy, e.g. <code>200</code></td>
+    </tr>
+    <tr>
       <td><strong>memory</strong></td>
       <td>check available memory</td>
       <td>MinAvailable</td>

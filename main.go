@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/ushis/gesundheit/check/disk-space"
 	_ "github.com/ushis/gesundheit/check/http-json"
+	_ "github.com/ushis/gesundheit/check/http-status"
 	_ "github.com/ushis/gesundheit/check/memory"
 	_ "github.com/ushis/gesundheit/check/mtime"
 	_ "github.com/ushis/gesundheit/filter/office-hours"

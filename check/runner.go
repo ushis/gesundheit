@@ -37,6 +37,7 @@ func (r *Runner) Run() {
 	select {
 	case <-time.After(jitter):
 	case <-r.stop:
+		r.wg.Done()
 		return
 	}
 	ticker := time.NewTicker(interval)
