@@ -87,9 +87,9 @@ gesundheit -confdir /etc/gesundheit
   <tbody>
     <tr>
       <td rowspan="2"><strong>disk-space</strong></td>
-      <td rowspan="2">check available disk space</td>
+      <td rowspan="2">Check available disk space</td>
       <td>MountPoint</td>
-      <td>MountPoint of the disk to check, e.g. <code>"/"</code></td>
+      <td>Mount point of the disk to check, e.g. <code>"/"</code></td>
     </tr>
     <tr>
       <td>MinAvailable</td>
@@ -97,7 +97,7 @@ gesundheit -confdir /etc/gesundheit
     </tr>
     <tr>
       <td rowspan="3"><strong>http-json</strong></td>
-      <td rowspan="3">check json value in http response</td>
+      <td rowspan="3">Check json value in http response</td>
       <td>Url</td>
       <td>Url used to request the json document</td>
     </tr>
@@ -114,7 +114,7 @@ gesundheit -confdir /etc/gesundheit
     </tr>
     <tr>
       <td rowspan="2"><strong>http-status</strong></td>
-      <td rowspan="2">check status of http response</td>
+      <td rowspan="2">Check status of http response</td>
       <td>Url</td>
       <td>Url to request</td>
     </tr>
@@ -124,13 +124,13 @@ gesundheit -confdir /etc/gesundheit
     </tr>
     <tr>
       <td><strong>memory</strong></td>
-      <td>check available memory</td>
+      <td>Check available memory</td>
       <td>MinAvailable</td>
       <td>Min available memory considered healthy, e.g. <code>"1G"</code></td>
     </tr>
     <tr>
       <td rowspan="2"><strong>mtime</strong></td>
-      <td rowspan="2">check mtime of a file</td>
+      <td rowspan="2">Check mtime of a file</td>
       <td>Path</td>
       <td>Path to file</td>
     </tr>
@@ -159,7 +159,7 @@ gesundheit -confdir /etc/gesundheit
   <tbody>
     <tr>
       <td rowspan="3"><strong>log</strong></td>
-      <td rowspan="3">log check results</td>
+      <td rowspan="3">Log check results</td>
       <td>Path</td>
       <td>Path to logfile (<code>"-"</code> for stdout)</td>
       <td><code>"-"</code></td>
@@ -176,7 +176,7 @@ gesundheit -confdir /etc/gesundheit
     </tr>
     <tr>
       <td rowspan="3"><strong>gotify</strong></td>
-      <td rowspan="3">send check results to gotify</td>
+      <td rowspan="3">Send check results to gotify</td>
       <td>Url</td>
       <td>Url of the gotify server</td>
       <td></td>
@@ -208,13 +208,13 @@ gesundheit -confdir /etc/gesundheit
   <tbody>
     <tr>
       <td><strong>result-change</strong></td>
-      <td>filter changed check results</td>
+      <td>Filter changed check results</td>
       <td></td>
       <td></td>
     </tr>
     <tr>
       <td><strong>office-hours</strong></td>
-      <td>filter events inside given time spans</td>
+      <td>Filter events inside given time spans</td>
       <td>Hours</td>
       <td>
         List of time spans, e.g.<br/>
