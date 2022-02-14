@@ -1,0 +1,11 @@
+[Unit]
+Description=Gesundheitsdienst
+
+[Service]
+Type=simple
+User=gesundheit
+Group=gesundheit
+ExecStart=/usr/bin/gesundheit -confdir /etc/gesundheit
+
+[Install]
+WantedBy=multi-user.target
