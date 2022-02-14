@@ -86,17 +86,14 @@ gesundheit -confdir /etc/gesundheit
   </thead>
   <tbody>
     <tr>
-      <td rowspan="2"><strong>mtime</strong></td>
-      <td rowspan="2">check mtime of a file</td>
-      <td>Path</td>
-      <td>Path to file</td>
+      <td rowspan="2"><strong>disk-space</strong></td>
+      <td rowspan="2">check disk space</td>
+      <td>MountPoint</td>
+      <td>MountPoint of the disk to check, e.g. <code>"/"</code></td>
     </tr>
     <tr>
-      <td>MaxAge</td>
-      <td>
-        Max age of the file for beeing considered healthy,
-        e.g. <code>"1h5m10s"</code>
-      </td>
+      <td>MinAvailable</td>
+      <td>Min available space considered healthy, e.g. <code>"1G"</code></td>
     </tr>
     <tr>
       <td rowspan="3"><strong>http-json</strong></td>
@@ -114,6 +111,19 @@ gesundheit -confdir /etc/gesundheit
     <tr>
       <td>Value</td>
       <td>Expected value</td>
+    </tr>
+    <tr>
+      <td rowspan="2"><strong>mtime</strong></td>
+      <td rowspan="2">check mtime of a file</td>
+      <td>Path</td>
+      <td>Path to file</td>
+    </tr>
+    <tr>
+      <td>MaxAge</td>
+      <td>
+        Max age of the file for beeing considered healthy,
+        e.g. <code>"1h5m10s"</code>
+      </td>
     </tr>
   </tbody>
 </table>
