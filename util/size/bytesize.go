@@ -145,21 +145,21 @@ func parseUnit(str string) (uint64, error) {
 	switch strings.ToLower(str) {
 	case "", "b":
 		return bExp, nil
-	case "k", "kib":
+	case "k", "kb", "kib":
 		return kibExp, nil
-	case "m", "mib":
+	case "m", "mb", "mib":
 		return mibExp, nil
-	case "g", "gib":
+	case "g", "gb", "gib":
 		return gibExp, nil
-	case "t", "tib":
+	case "t", "tb", "tib":
 		return tibExp, nil
-	case "p", "pib":
+	case "p", "pb", "pib":
 		return pibExp, nil
-	case "e", "eib":
+	case "e", "eb", "eib":
 		return eibExp, nil
-	case "z", "zib":
+	case "z", "zb", "zib":
 		return zibExp, nil
-	case "y", "yib":
+	case "y", "yb", "yib":
 		return yibExp, nil
 	default:
 		return 0, errors.New("unknown unit: " + str)

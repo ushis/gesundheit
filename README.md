@@ -87,7 +87,7 @@ gesundheit -confdir /etc/gesundheit
   <tbody>
     <tr>
       <td rowspan="2"><strong>disk-space</strong></td>
-      <td rowspan="2">check disk space</td>
+      <td rowspan="2">check available disk space</td>
       <td>MountPoint</td>
       <td>MountPoint of the disk to check, e.g. <code>"/"</code></td>
     </tr>
@@ -111,6 +111,12 @@ gesundheit -confdir /etc/gesundheit
     <tr>
       <td>Value</td>
       <td>Expected value</td>
+    </tr>
+    <tr>
+      <td><strong>memory</strong></td>
+      <td>check available memory</td>
+      <td>MinAvailable</td>
+      <td>Min available memory considered healthy, e.g. <code>"1G"</code></td>
     </tr>
     <tr>
       <td rowspan="2"><strong>mtime</strong></td>
