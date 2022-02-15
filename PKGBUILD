@@ -21,7 +21,7 @@ install=
 changelog=
 source=("$pkgname-$pkgver.tar.gz::https://github.com/ushis/gesundheit/archive/${pkgver}.tar.gz")
 noextract=()
-sha256sums=('a22256548fa3878fc6c02cacdcbb879cb735069b158327a4f450ce0be0c64444')
+sha256sums=('c6cc84272c97b4d4dab056044b8ef6fe46a7873f94f2fb4c0e8d8c0df89a180a')
 validpgpkeys=()
 
 #prepare() {}
@@ -41,5 +41,5 @@ package() {
 	install -Dm644 "systemd/$pkgname.sysusers" "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
 	install -Dm644 "systemd/$pkgname.service" "$pkgdir/usr/lib/systemd/system/$pkgname.service"
 	install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-	install -dm755 "/etc/$pkgname"
+	install -dm755 "$pkgdir/etc/$pkgname"
 }
