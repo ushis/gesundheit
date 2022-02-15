@@ -30,9 +30,9 @@ func NewRunner(description string, interval time.Duration, check Check, events c
 
 func (r *Runner) Run() {
 	r.wg.Add(1)
-	maxJitter := r.interval / 100
-	jitter := time.Duration(rand.Intn(int(2 * maxJitter)))
-	interval := r.interval + time.Duration(jitter) - maxJitter
+	maxJitter := r.interval / 60
+	jitter := time.Duration(rand.Uint64() & uint64(2*maxJitter))
+	interval := r.interval + jitter - maxJitter
 
 	select {
 	case <-time.After(jitter):
