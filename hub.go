@@ -35,8 +35,9 @@ func (h *hub) registerHandlerRunner(fn func() *handler.Runner) {
 }
 
 func (h *hub) run() {
+	h.wg.Add(1)
+
 	for _, r := range h.checkRunners {
-		h.wg.Add(1)
 		go r.Run()
 	}
 	for {
@@ -50,11 +51,11 @@ func (h *hub) run() {
 		case <-h.done:
 			for _, r := range h.checkRunners {
 				r.Stop()
-				h.wg.Done()
 			}
 			for _, r := range h.handlerRunners {
 				r.Close()
 			}
+			h.wg.Done()
 			return
 		}
 	}
