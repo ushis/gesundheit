@@ -11,6 +11,20 @@ import (
 	"github.com/ushis/gesundheit/handler"
 )
 
+type config struct {
+	Log     logConfig
+	Modules modulesConfig
+}
+
+type logConfig struct {
+	Path       string
+	Timestamps bool
+}
+
+type modulesConfig struct {
+	Config string
+}
+
 type moduleConfig struct {
 	Check   *checkConfig
 	Handler *handlerConfig
@@ -34,21 +48,37 @@ type filterConfig struct {
 	Config toml.Primitive
 }
 
-func loadConfDir(hub *hub, path string) error {
-	paths, err := filepath.Glob(filepath.Join(path, "*.toml"))
+func loadConf(path string) (config, error) {
+	conf := config{
+		Log:     logConfig{Path: "-", Timestamps: false},
+		Modules: modulesConfig{Config: "modules.d"},
+	}
+	meta, err := toml.DecodeFile(path, &conf)
+
+	if err != nil {
+		return conf, err
+	}
+	if len(meta.Undecoded()) > 0 {
+		return conf, fmt.Errorf("failed to load config: %s: unknown field %s", path, meta.Undecoded()[0])
+	}
+	return conf, nil
+}
+
+func loadModuleConfigs(hub *hub, glob string) error {
+	paths, err := filepath.Glob(glob)
 
 	if err != nil {
 		return err
 	}
 	for _, path := range paths {
-		if err := loadConf(hub, path); err != nil {
+		if err := loadModuleConf(hub, path); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func loadConf(hub *hub, path string) error {
+func loadModuleConf(hub *hub, path string) error {
 	mod := moduleConfig{}
 	meta, err := toml.DecodeFile(path, &mod)
 

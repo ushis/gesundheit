@@ -5,7 +5,7 @@ Description=Gesundheitsdienst
 Type=simple
 User=gesundheit
 Group=gesundheit
-ExecStart=/usr/bin/gesundheit -confdir /etc/gesundheit
+ExecStart=/usr/bin/gesundheit -conf /etc/gesundheit/gesundheit.toml
 
 [Install]
 WantedBy=multi-user.target

@@ -4,10 +4,27 @@ Get notifications about unexpected system state from your local Gesundheitsdiens
 
 ## Usage
 
-Create a configuration directory (e.g. `/etc/gesundheit`) with some check and handler configuration files:
+Create a configuration file (e.g. `/etc/gesundheit/gesundheit.toml`).
 
 ```toml
-# /etc/gesundheit/check-backup.toml
+# /etc/gesundheit/gesundheit.toml
+#
+# We are going to log everything to stdout without timestamps. systemd is
+# taking care of the rest.
+[Log]
+Path = "-"
+Timestamps = false
+
+# The configuration files for our modules live in
+# /etc/gesundheit/modules.d/*.toml
+[Modules]
+Config = "modules.d/*.toml"
+```
+
+Create some check and handler configuration files.
+
+```toml
+# /etc/gesundheit/modules.d/check-backup.toml
 #
 # Our backup system touches /var/lib/backup/backup.stamp after every
 # successful backup run. Lets check once every hour that the stamp has
@@ -23,17 +40,16 @@ MaxAge = "25h"
 ```
 
 ```toml
-# /etc/gesundheit/log.toml
+# /etc/gesundheit/modules.d/log.toml
 #
-# We don't trust gesundheit yet. For this reason we are going to log every
-# single check result. The default configuration (stdout, no timestamps) is
-# totally fine, since we delegate the logging details to systemd.
+# We don't trust gesundheit yet. For this reason we are going to use no
+# filter and log every single check result.
 [Handler]
 Module = "log"
 ```
 
 ```toml
-# /etc/gesundheit/gotify.toml
+# /etc/gesundheit/modules.d/gotify.toml
 #
 # We need to get notified in case something is off and want to use gotify for
 # that. Since people do not want to get spammed with every single check result
@@ -44,8 +60,8 @@ Module = "log"
 # Since this file contains a secret, it is important to set appropriate
 # permissions.
 #
-#   chwon root:gesundheit /etc/gesundheit/*.toml
-#   chmod 0640 /etc/gesundheit/*.toml
+#   chown root:gesundheit /etc/gesundheit/modules.d/*.toml
+#   chmod 0640 /etc/gesundheit/modules.d/*.toml
 #
 [Handler]
 Module = "gotify"
@@ -70,7 +86,7 @@ Hours = [
 We are ready to go.
 
 ```
-gesundheit -confdir /etc/gesundheit
+gesundheit -conf /etc/gesundheit/gesundheit.toml
 ```
 
 ### Checks
@@ -158,21 +174,11 @@ gesundheit -confdir /etc/gesundheit
   </thead>
   <tbody>
     <tr>
-      <td rowspan="3"><strong>log</strong></td>
-      <td rowspan="3">Log check results</td>
-      <td>Path</td>
-      <td>Path to logfile (<code>"-"</code> for stdout)</td>
-      <td><code>"-"</code></td>
-    </tr>
-    <tr>
-      <td>Prefix</td>
-      <td>Static prefix for all log entries</td>
-      <td><code>""</code></td>
-    </tr>
-    <tr>
-      <td>Timestamp</td>
-      <td>Prepend timestamp to all log entries</td>
-      <td><code>false</code></td>
+      <td><strong>log</strong></td>
+      <td>Log check results</td>
+      <td></td>
+      <td></td>
+      <td></td>
     </tr>
     <tr>
       <td rowspan="3"><strong>gotify</strong></td>

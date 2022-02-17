@@ -39,7 +39,7 @@ func (c Check) Exec() (string, error) {
 		return "", fmt.Errorf("failed to get %s: %s", c.Url, err.Error())
 	}
 	if resp.StatusCode != c.Status {
-		return "", fmt.Errorf("\"%s\" responded with \"%s\"", c.Url, resp.Status)
+		return "", fmt.Errorf("%s responded with \"%s\"", c.Url, resp.Status)
 	}
-	return fmt.Sprintf("\"%s\" responded with \"%s\"", c.Url, resp.Status), nil
+	return fmt.Sprintf("%s responded with \"%s\"", c.Url, resp.Status), nil
 }

@@ -33,9 +33,10 @@ func (r *Runner) Run() {
 	maxJitter := r.interval / 60
 	jitter := time.Duration(rand.Uint64() & uint64(2*maxJitter))
 	interval := r.interval + jitter - maxJitter
+	delay := time.Duration(rand.Uint64() & uint64(interval))
 
 	select {
-	case <-time.After(jitter):
+	case <-time.After(delay):
 	case <-r.stop:
 		r.wg.Done()
 		return
@@ -63,12 +64,12 @@ func (r *Runner) Run() {
 func (r *Runner) exec() (event Event) {
 	if msg, err := r.check.Exec(); err != nil {
 		event = Event{
-			Result:           FAIL,
+			Result:           CRITICAL,
 			Message:          err.Error(),
 			CheckDescription: r.description,
 			CheckHistory:     r.history,
 		}
-		r.history = (r.history << 1) | FAIL
+		r.history = (r.history << 1) | CRITICAL
 	} else {
 		event = Event{
 			Result:           OK,

@@ -3,9 +3,12 @@ package main
 import (
 	"flag"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
+	"time"
 
 	_ "github.com/ushis/gesundheit/check/disk-space"
 	_ "github.com/ushis/gesundheit/check/http-json"
@@ -19,19 +22,43 @@ import (
 )
 
 var (
-	confDir string
+	confPath string
 )
 
 func init() {
-	flag.StringVar(&confDir, "confdir", "/etc/gesundheit", "configuration directory")
+	flag.StringVar(&confPath, "conf", "/etc/gesundheit/gesundheit.toml", "config file")
 }
 
 func main() {
 	flag.Parse()
-	h := newHub()
+	log.SetOutput(os.Stdout)
+	log.SetFlags(0)
+	rand.Seed(time.Now().UnixNano())
 
-	if err := loadConfDir(h, confDir); err != nil {
-		log.Fatalf("failed to load module config: %s", err.Error())
+	conf, err := loadConf(confPath)
+
+	if err != nil {
+		log.Fatalf("failed to load config: %s", err)
+	}
+	if conf.Log.Path != "-" {
+		f, err := os.OpenFile(conf.Log.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0640)
+
+		if err != nil {
+			log.Fatalf("failed to open log file: %s", err)
+		}
+		defer f.Close()
+
+		log.SetOutput(f)
+	}
+	if conf.Log.Timestamps {
+		log.SetFlags(log.Ldate | log.Ltime)
+	}
+	h := newHub()
+	confDir := filepath.Dir(confPath)
+	moduleConfigs := filepath.Join(confDir, conf.Modules.Config)
+
+	if err := loadModuleConfigs(h, moduleConfigs); err != nil {
+		log.Fatalf("failed to load module config: %s", err)
 	}
 	go h.run()
 

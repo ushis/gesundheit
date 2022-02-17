@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -44,14 +45,13 @@ type Message struct {
 }
 
 func (h Handler) Handle(e check.Event) error {
-	buf := bytes.NewBuffer(nil)
-	msg := Message{Message: e.Message, Priority: h.Priority}
-
-	if e.Result == check.OK {
-		msg.Title = e.CheckDescription + " succeeded"
-	} else {
-		msg.Title = e.CheckDescription + " failed"
+	msg := Message{
+		Title:    fmt.Sprintf("%s %s", e.CheckDescription, e.Result),
+		Message:  e.Message,
+		Priority: h.Priority,
 	}
+	buf := bytes.NewBuffer(nil)
+
 	if err := json.NewEncoder(buf).Encode(msg); err != nil {
 		return err
 	}

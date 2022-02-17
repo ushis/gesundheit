@@ -15,7 +15,7 @@ optdepends=()
 provides=()
 conflicts=()
 replaces=()
-backup=()
+backup=(etc/gesundheit/gesundheit.toml)
 options=()
 install=
 changelog=
@@ -41,5 +41,6 @@ package() {
 	install -Dm644 "systemd/$pkgname.sysusers" "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
 	install -Dm644 "systemd/$pkgname.service" "$pkgdir/usr/lib/systemd/system/$pkgname.service"
 	install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-	install -dm755 "$pkgdir/etc/$pkgname"
+	install -Dm644 "$pkgname.toml" "$pkgdir/etc/$pkgname/$pkgname.toml"
+	install -dm755 "$pkgdir/etc/$pkgname/modules.d"
 }

@@ -68,15 +68,15 @@ func (c Check) Exec() (string, error) {
 
 		if !ok {
 			if n == 0 {
-				return "", fmt.Errorf("\"%s\" | \"%s\" returned no values", c.Url, c.Query)
+				return "", fmt.Errorf("%s -> \"%s\" returned no values", c.Url, c.Query)
 			}
-			return fmt.Sprintf("\"%s\" | \"%s\" returned %#v", c.Url, c.Query, c.Value), nil
+			return fmt.Sprintf("%s -> \"%s\" returned %#v", c.Url, c.Query, c.Value), nil
 		}
 		if n > 1 {
-			return "", fmt.Errorf("\"%s\" | \"%s\" returned multiple values", c.Url, c.Query)
+			return "", fmt.Errorf("%s -> \"%s\" returned multiple values", c.Url, c.Query)
 		}
 		if v != c.Value {
-			return "", fmt.Errorf("\"%s\" | \"%s\" returned %#v", c.Url, c.Query, v)
+			return "", fmt.Errorf("%s -> \"%s\" returned %#v", c.Url, c.Query, v)
 		}
 		n += 1
 	}

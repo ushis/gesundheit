@@ -1,0 +1,8 @@
+# Log to stdout without timestamps
+[Log]
+Path = "-"
+Timestamps = false
+
+# Load modules config from modules.d
+[Modules]
+Config = "modules.d/*.toml"
