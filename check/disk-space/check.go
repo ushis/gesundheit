@@ -5,7 +5,7 @@ import (
 	"syscall"
 
 	"github.com/ushis/gesundheit/check"
-	"github.com/ushis/gesundheit/util/size"
+	"github.com/ushis/gesundheit/check/size"
 )
 
 type Check struct {
