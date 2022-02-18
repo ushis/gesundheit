@@ -112,10 +112,21 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>Min available space considered healthy, e.g. <code>"1G"</code></td>
     </tr>
     <tr>
-      <td rowspan="3"><strong>http-json</strong></td>
-      <td rowspan="3">Check json value in http response</td>
+      <td rowspan="5"><strong>http-json</strong></td>
+      <td rowspan="5">Check json value in http response</td>
+      <td>Method</td>
+      <td>HTTP request method, e.g. <code>"GET"</code></td>
+    </tr>
+    <tr>
       <td>Url</td>
       <td>Url used to request the json document</td>
+    </tr>
+    <tr>
+      <td>Header</td>
+      <td>
+        HTTP request header, e.g.<br/>
+        <code>{Authorization = ["Token secret"]}</code>
+      </td>
     </tr>
     <tr>
       <td>Query</td>
@@ -129,10 +140,21 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>Expected value</td>
     </tr>
     <tr>
-      <td rowspan="2"><strong>http-status</strong></td>
-      <td rowspan="2">Check status of http response</td>
+      <td rowspan="4"><strong>http-status</strong></td>
+      <td rowspan="4">Check status of http response</td>
+      <td>Method</td>
+      <td>HTTP request method, e.g. <code>"GET"</code></td>
+    </tr>
+    <tr>
       <td>Url</td>
       <td>Url to request</td>
+    </tr>
+    <tr>
+      <td>Header</td>
+      <td>
+        HTTP request header, e.g.<br/>
+        <code>{Authorization = ["Token secret"]}</code>
+      </td>
     </tr>
     <tr>
       <td>Status</td>

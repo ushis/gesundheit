@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/itchyny/gojq"
 	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/check/http"
 )
 
 type Check struct {
-	Url   string
-	Query *gojq.Query
-	Value interface{}
+	HttpConf http.Config
+	Query    *gojq.Query
+	Value    interface{}
 }
 
 type Config struct {
-	Url   string
+	http.Config
 	Query string
 	Value interface{}
 }
@@ -27,33 +27,36 @@ func init() {
 }
 
 func New(configure func(interface{}) error) (check.Check, error) {
-	cfg := Config{}
+	conf := Config{}
 
-	if err := configure(&cfg); err != nil {
+	if err := configure(&conf); err != nil {
 		return nil, err
 	}
-	if cfg.Url == "" {
+	if conf.Url == "" {
 		return nil, errors.New("missing Url")
 	}
-	if cfg.Query == "" {
+	if conf.Query == "" {
 		return nil, errors.New("missing Query")
 	}
-	if cfg.Value == nil {
+	if conf.Value == nil {
 		return nil, errors.New("missing Value")
 	}
-	query, err := gojq.Parse(cfg.Query)
+	query, err := gojq.Parse(conf.Query)
 
 	if err != nil {
 		return nil, err
 	}
-	return &Check{Url: cfg.Url, Query: query, Value: cfg.Value}, nil
+	if n, ok := conf.Value.(int); ok {
+		conf.Value = int64(n)
+	}
+	return &Check{HttpConf: conf.Config, Query: query, Value: conf.Value}, nil
 }
 
 func (c Check) Exec() (string, error) {
-	resp, err := http.Get(c.Url)
+	resp, err := http.Request(c.HttpConf)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to get %s: %s", c.Url, err.Error())
+		return "", fmt.Errorf("failed to %s: %s", c.HttpConf, err)
 	}
 	body := make(map[string]interface{})
 
@@ -68,15 +71,18 @@ func (c Check) Exec() (string, error) {
 
 		if !ok {
 			if n == 0 {
-				return "", fmt.Errorf("%s -> \"%s\" returned no values", c.Url, c.Query)
+				return "", fmt.Errorf("%s -> \"%s\" returned no values", c.HttpConf, c.Query)
 			}
-			return fmt.Sprintf("%s -> \"%s\" returned %#v", c.Url, c.Query, c.Value), nil
+			return fmt.Sprintf("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, c.Value), nil
 		}
 		if n > 1 {
-			return "", fmt.Errorf("%s -> \"%s\" returned multiple values", c.Url, c.Query)
+			return "", fmt.Errorf("%s -> \"%s\" returned multiple values", c.HttpConf, c.Query)
+		}
+		if n, ok := v.(int); ok {
+			v = int64(n)
 		}
 		if v != c.Value {
-			return "", fmt.Errorf("%s -> \"%s\" returned %#v", c.Url, c.Query, v)
+			return "", fmt.Errorf("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, v)
 		}
 		n += 1
 	}
