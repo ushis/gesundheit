@@ -2,6 +2,27 @@
 
 Get notifications about unexpected system state from your local Gesundheitsdienst.
 
+## Install
+
+#### Arch Linux
+
+Arch Linux users can install gesundheit via the
+[gesundheit repository](https://ushis.github.io/gesundheit/).
+
+#### Linux
+
+Other Linux users can download binaries from the
+[releases page](https://github.com/ushis/gesundheit/releases).
+
+#### From Source
+
+You will need a [Go compiler](https://go.dev/), if you want to install gesundheit
+from source. Once you have got one, it is as easy as:
+
+```
+go install github.com/ushis/gesundheit@latest
+```
+
 ## Usage
 
 Create a configuration file (e.g. `/etc/gesundheit/gesundheit.toml`).
