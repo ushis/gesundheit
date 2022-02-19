@@ -1,4 +1,5 @@
-name: "build"
+name: "main"
+
 on: "push"
 
 jobs:
