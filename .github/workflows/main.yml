@@ -64,6 +64,7 @@ jobs:
           path: pages
       - run: |
           cd pages
+          rm -rf {x86_64,armv7h}
           mkdir -p {x86_64,armv7h}
           cp /build/x86_64/gesundheit{-*.pkg.*,.db*,.files*} x86_64
           cp /build/armv7h/gesundheit{-*.pkg.*,.db*,.files*} armv7h
