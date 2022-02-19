@@ -67,7 +67,7 @@ jobs:
           mkdir -p {x86_64,armv7h}
           cp /build/x86_64/gesundheit{-*.pkg.*,.db*,.files*} x86_64
           cp /build/armv7h/gesundheit{-*.pkg.*,.db*,.files*} armv7h
-          (for f in {,**/}gesundheit*; do echo "* [${f}](${f})"; done) > _repo.md
+          (for f in **/gesundheit*; do echo "* [${f}](${f})"; done) > _repo.md
           git config user.name "Github Action"
           git config user.email "ushi+github-action@honkgong.info"
           git add .
