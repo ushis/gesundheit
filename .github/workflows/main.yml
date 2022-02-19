@@ -1,34 +1,60 @@
 name: "build"
 on: "push"
 
-env:
-  CGO_ENABLED: "0"
-  GOOS: "linux"
-
 jobs:
   build:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
         arch: ["386", "amd64", "arm", "arm64"]
+    env:
+      GOOS: "linux"
+      GOARCH: "${{ matrix.arch }}"
+      CGO_ENABLED: "0"
     steps:
       - uses: "actions/checkout@v2"
       - uses: "actions/setup-go@v2"
         with:
           go-version: ">=1.17.7"
-      - run: "go build -v -a -o gesundheit-${GITHUB_REF##*/}-${{ matrix.arch }} ."
-        env:
-          GOARCH: "${{ matrix.arch }}"
-      - if: startsWith(github.ref, 'refs/tags/')
-        uses: "softprops/action-gh-release@v1"
+      - run: |
+          go build -v -a -o gesundheit .
+      - uses: actions/upload-artifact@v2
+        with:
+          name: gesundheit-${{ matrix.arch }}
+          path: gesundheit
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build]
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        arch: ["386", "amd64", "arm", "arm64"]
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: gesundheit-${{ matrix.arch }}
+      - run: |
+          mv gesundheit "gesundheit-${GITHUB_REF_NAME}-${{ matrix.arch }}"
+      - uses: "softprops/action-gh-release@v1"
         with:
           files: "gesundheit-*"
 
-  pkgbuild:
+  pkg:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: "ubuntu-latest"
     container: archlinux/archlinux:base-devel
+    strategy:
+      matrix:
+        arch: ["x86_64", "armv7h"]
     steps:
+      - id: goarch
+        run: |
+          if test "${{ matrix.arch }}" = "x86_64"; then
+            echo '::set-output name=GOARCH::amd64'
+          elif test "${{ matrix.arch }}" = "armv7h"; then
+            echo '::set-output name=GOARCH::arm'
+          fi
       - run: |
           pacman -Syu --noconfirm
           pacman -S --noconfirm git go
@@ -37,37 +63,48 @@ jobs:
           echo -n "${PACKAGE_SIGNING_KEY}" | su build -c "gpg --import"
         env:
           PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
+      - uses: "actions/checkout@v2"
+        with:
+          path: src
       - run: |
-          curl -LO "https://raw.githubusercontent.com/ushis/gesundheit/${GITHUB_REF_NAME}/PKGBUILD"
-          sed -i "s/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g" PKGBUILD
-          mkdir -p /build/{x86_64,armv7h}
-          chown -R build:build /build
-          cp PKGBUILD /build/x86_64
-          cp PKGBUILD /build/armv7h
-      - run: |
-          cd /build/x86_64
-          export CARCH="x86_64"
-          export CHOST="x86_64-pc-linux-gnu"
-          export GOARCH="amd64"
+          mkdir /build
+          chown build:build /build
+          sed "s/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g" src/PKGBUILD > /build/PKGBUILD
+          cd /build
+          export CARCH="${{ matrix.arch }}"
+          export GOARCH="${{ steps.goarch.outputs.GOARCH }}"
           su build -c "makepkg --sign --skipchecksums"
           su build -c "repo-add gesundheit.db.tar.gz gesundheit-*.pkg.tar.zst"
-      - run: |
-          cd /build/armv7h
-          export CARCH="armv7h"
-          export CHOST="armv7l-unknown-linux-gnueabihf"
-          export GOARCH="arm"
-          su build -c "makepkg --sign --skipchecksums"
-          su build -c "repo-add gesundheit.db.tar.gz gesundheit-*.pkg.tar.zst"
+      - run: ls -l /build
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pkg-${{ matrix.arch }}
+          path: |
+            /build/gesundheit-*.pkg.*
+            /build/gesundheit.db*
+            /build/gesundheit.files*
+
+  pages:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [pkg]
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: pkg-x86_64
+          path: pkgs/x86_64
+      - uses: actions/download-artifact@v2
+        with:
+          name: pkg-armv7h
+          path: pkgs/armv7h
       - uses: "actions/checkout@v2"
         with:
           ref: gh-pages
           path: pages
       - run: |
+          rm -rf pages/{x86_64,armv7h}
+          mv pkgs/{x86_64,armv7h} pages
           cd pages
-          rm -rf {x86_64,armv7h}
-          mkdir -p {x86_64,armv7h}
-          cp /build/x86_64/gesundheit{-*.pkg.*,.db*,.files*} x86_64
-          cp /build/armv7h/gesundheit{-*.pkg.*,.db*,.files*} armv7h
           (for f in **/gesundheit*; do echo "* [${f}](${f})"; done) > _repo.md
           git config user.name "Github Action"
           git config user.email "ushi+github-action@honkgong.info"
