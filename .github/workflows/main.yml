@@ -38,10 +38,10 @@ jobs:
         env:
           PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
       - run: |
+          curl -LO "https://raw.githubusercontent.com/ushis/gesundheit/${GITHUB_REF_NAME}/PKGBUILD"
+          sed -i "s/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g" PKGBUILD
           mkdir -p /build/{x86_64,armv7h}
           chown -R build:build /build
-          su build -c "curl -LO https://raw.githubusercontent.com/ushis/gesundheit/${GITHUB_REF_NAME}/PKGBUILD"
-          su build -c "sed -i 's/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g' PKGBUILD"
           cp PKGBUILD /build/x86_64
           cp PKGBUILD /build/armv7h
       - run: |
@@ -67,7 +67,7 @@ jobs:
           mkdir -p {x86_64,armv7h}
           cp /build/x86_64/gesundheit{-*.pkg.*,.db*,.files*} x86_64
           cp /build/armv7h/gesundheit{-*.pkg.*,.db*,.files*} armv7h
-          (for f in {,**/}gesundheit*; do echo "* [${f}](${f})"; done) > index.md
+          (for f in {,**/}gesundheit*; do echo "* [${f}](${f})"; done) > _repo.md
           git config user.name "Github Action"
           git config user.email "ushi+github-action@honkgong.info"
           git add .
