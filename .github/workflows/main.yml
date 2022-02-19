@@ -24,24 +24,41 @@ jobs:
         with:
           files: "gesundheit-*"
 
-  pkgbuild:
-    runs-on: "ubuntu-latest"
+  pkgbuild-x86_64:
     if: startsWith(github.ref, 'refs/tags/')
+    runs-on: "ubuntu-latest"
+    container: archlinux/archlinux:base-devel
     steps:
-      - uses: "actions/checkout@v2"
       - run: |
-          sed -i "s/pkgver=.\+/pkgver=${GITHUB_REF##*/}/g" PKGBUILD
-          docker run -i -v $(pwd):/build archlinux/archlinux:base-devel <<EOF
-            pacman -Syu --noconfirm
-            pacman -S --noconfirm go
-            groupadd -g 1000 build
-            useradd -m -u 1000 -g 1000 build
-            mkdir -m 0777 /build/pkg
-            chown build:build /build/pkg
-            cd /build/pkg
-            cp ../PKGBUILD .
-            su build -s /usr/bin/bash -c "makepkg --skipchecksums"
-          EOF
-      - uses: "softprops/action-gh-release@v1"
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm git go
+      - run: |
+          useradd -m build
+          mkdir /build
+          chown build:build /build
+      - run: |
+          echo -n "${PACKAGE_SIGNING_KEY}" | su build -c "gpg --import"
+        env:
+          PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
+      - run: |
+          cd /build
+          su build -c "curl -LO https://raw.githubusercontent.com/ushis/gesundheit/${GITHUB_REF##*/}/PKGBUILD"
+          su build -c "sed -i 's/pkgver=.\+/pkgver=${GITHUB_REF##*/}/g' PKGBUILD"
+          su build -c "makepkg --sign --skipchecksums"
+          su build -c "repo-add gesundheit.db.tar.gz gesundheit-*.pkg.tar.zst"
+          su build -c "gpg --export --armor" > gesundheit.pem
+      - uses: "actions/checkout@v2"
         with:
-          files: "pkg/gesundheit-*.pkg.*"
+          ref: gh-pages
+          path: pages
+      - run: |
+          cd pages
+          cp /build/gesundheit.pem .
+          mkdir -p x86_64
+          cp /build/gesundheit{-*.pkg.*,.db*,.files*} x86_64
+          (for f in {,**/}gesundheit*; do echo "* [${f}](${f})"; done) > index.md
+          git config user.name "Github Action"
+          git config user.email "ushi+github-action@honkgong.info"
+          git add .
+          git commit -m "release ${GITHUB_REF##*/}"
+          git push
