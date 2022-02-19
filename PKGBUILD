@@ -29,7 +29,7 @@ validpgpkeys=()
 build() {
 	cd "$pkgname-$pkgver"
 	export CGO_ENABLED="0"
-	export GOFLAGS="-buildmode=pie -trimpath -mod=readonly -modcacherw"
+	export GOFLAGS="-trimpath -mod=readonly -modcacherw"
 	go build -v -o "$pkgname"
 }
 
