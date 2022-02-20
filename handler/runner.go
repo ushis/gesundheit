@@ -24,10 +24,6 @@ func (r *Runner) Handle(e check.Event) error {
 	return nil
 }
 
-func (r *Runner) Close() {
-	r.handler.Close()
-}
-
 func (r *Runner) filter(e check.Event) (check.Event, bool) {
 	ok := true
 

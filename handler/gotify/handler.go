@@ -72,5 +72,3 @@ func (h Handler) Handle(e check.Event) error {
 	}
 	return nil
 }
-
-func (h Handler) Close() {}
