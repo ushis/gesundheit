@@ -11,6 +11,8 @@ jobs:
     env:
       GOOS: "linux"
       GOARCH: "${{ matrix.arch }}"
+      GOARM: "7"
+      GOFLAGS: "-trimpath -mod=readonly -modcacherw"
       CGO_ENABLED: "0"
     steps:
       - uses: "actions/checkout@v2"
