@@ -55,19 +55,21 @@ jobs:
         with:
           files: "gesundheit-*"
 
-  pkg:
+  arch:
     if: startsWith(github.ref, 'refs/tags/')
+    needs: [build]
     runs-on: "ubuntu-latest"
     container: archlinux/archlinux:base-devel
     strategy:
       matrix:
-        arch: ["x86_64", "armv7h"]
+        arch: ["x86_64", "armv7h", "aarch64"]
     steps:
       - id: goarch
         run: |
           case "${{ matrix.arch }}" in
             "x86_64") echo "::set-output name=GOARCH::amd64";;
             "armv7h") echo "::set-output name=GOARCH::arm";;
+            "aarch64") echo "::set-output name=GOARCH::arm64";;
             *) echo "::set-output name=GOARCH::${{ matrix.arch }}";;
           esac
       - run: |
@@ -78,25 +80,33 @@ jobs:
           echo -n "${PACKAGE_SIGNING_KEY}" | su build -c "gpg --import"
         env:
           PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
+      - uses: actions/download-artifact@v2
+        with:
+          name: gesundheit-${{ steps.goarch.outputs.GOARCH }}
+          path: bin
       - uses: "actions/checkout@v2"
         with:
           path: src
       - run: |
-          mkdir /build
-          chown build:build /build
-          sed "s/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g" src/pkg/PKGBUILD > /build/PKGBUILD
-          cd /build
+          mkdir build
+          chown build:build build
+          sed "s/pkgver=/pkgver=${GITHUB_REF_NAME}/g" src/pkg/PKGBUILD > build/PKGBUILD
+          cp bin/gesundheit build
+          cp src/gesundheit.toml build
+          cp src/pkg/gesundheit.sysusers build
+          cp src/pkg/gesundheit.service build
+          cp src/LICENSE build
+          cd build
           export CARCH="${{ matrix.arch }}"
-          export GOARCH="${{ steps.goarch.outputs.GOARCH }}"
           su build -c "makepkg --sign --skipchecksums"
           su build -c "repo-add gesundheit.db.tar.gz gesundheit-*.pkg.tar.zst"
       - uses: actions/upload-artifact@v2
         with:
-          name: pkg-${{ matrix.arch }}
+          name: arch-${{ matrix.arch }}
           path: |
-            /build/gesundheit-*.pkg.*
-            /build/gesundheit.db*
-            /build/gesundheit.files*
+            build/gesundheit-*.pkg.*
+            build/gesundheit.db*
+            build/gesundheit.files*
 
   deb:
     if: startsWith(github.ref, 'refs/tags/')
@@ -121,15 +131,15 @@ jobs:
         with:
           path: src
       - run: |
-          sed -i "s#Architecture: .\+#Architecture: ${{ matrix.arch }}#g" src/pkg/deb/control
-          sed -i "s#Version: .\+#Version: ${GITHUB_REF_NAME}#g" src/pkg/deb/control
-          sudo install -Dm644 src/pkg/deb/control                  gesundheit/DEBIAN/control
-          sudo install -Dm755 src/pkg/deb/postinst                 gesundheit/DEBIAN/postinst
-          sudo install -Dm755 bin/gesundheit                       gesundheit/usr/bin/gesundheit
-          sudo install -Dm644 src/pkg/systemd/gesundheit.sysusers  gesundheit/usr/lib/sysusers.d/gesundheit.conf
-          sudo install -Dm644 src/pkg/systemd/gesundheit.service   gesundheit/usr/lib/systemd/system/gesundheit.service
-          sudo install -Dm644 src/gesundheit.toml                  gesundheit/etc/gesundheit/gesundheit.toml
-          sudo install -dm755                                      gesundheit/etc/gesundheit/modules.d
+          sed -i "s#Architecture:#Architecture: ${{ matrix.arch }}#g" src/pkg/deb/control
+          sed -i "s#Version:#Version: ${GITHUB_REF_NAME}#g" src/pkg/deb/control
+          sudo install -Dm644 src/pkg/deb/control         gesundheit/DEBIAN/control
+          sudo install -Dm755 src/pkg/deb/postinst        gesundheit/DEBIAN/postinst
+          sudo install -Dm755 bin/gesundheit              gesundheit/usr/bin/gesundheit
+          sudo install -Dm644 src/pkg/gesundheit.sysusers gesundheit/usr/lib/sysusers.d/gesundheit.conf
+          sudo install -Dm644 src/pkg/gesundheit.service  gesundheit/usr/lib/systemd/system/gesundheit.service
+          sudo install -Dm644 src/gesundheit.toml         gesundheit/etc/gesundheit/gesundheit.toml
+          sudo install -dm755                             gesundheit/etc/gesundheit/modules.d
           dpkg-deb --build gesundheit "gesundheit_${GITHUB_REF_NAME}_${{ matrix.arch }}.deb"
       - uses: actions/upload-artifact@v2
         with:
@@ -174,17 +184,21 @@ jobs:
 
   pages:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [pkg, deb-repo]
+    needs: [arch, deb-repo]
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/download-artifact@v2
         with:
-          name: pkg-x86_64
+          name: arch-x86_64
           path: pkg/arch/x86_64
       - uses: actions/download-artifact@v2
         with:
-          name: pkg-armv7h
+          name: arch-armv7h
           path: pkg/arch/armv7h
+      - uses: actions/download-artifact@v2
+        with:
+          name: arch-aarch64
+          path: pkg/arch/aarch64
       - uses: actions/download-artifact@v2
         with:
           name: deb-repo

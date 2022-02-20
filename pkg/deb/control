@@ -1,5 +1,5 @@
 Package: gesundheit
-Version: 0.0.1
-Architecture: amd64
+Version:
+Architecture:
 Maintainer: ushi <ushi@honkgong.info>
 Description: Get notifications about unexpected system state from your local Gesundheitsdienst.

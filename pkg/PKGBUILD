@@ -1,6 +1,6 @@
 # Maintainer: ushi <ushi@honkgong.info>
 pkgname=gesundheit
-pkgver=0.0.1
+pkgver=
 pkgrel=1
 epoch=
 pkgdesc="Get notifications about unexpected system state from your local Gesundheitsdienst."
@@ -19,28 +19,26 @@ backup=(etc/gesundheit/gesundheit.toml)
 options=()
 install=
 changelog=
-source=("$pkgname-$pkgver.tar.gz::https://github.com/ushis/gesundheit/archive/${pkgver}.tar.gz")
+source=(
+	'gesundheit'
+	'gesundheit.toml'
+	'gesundheit.service'
+	'gesundheit.sysusers'
+	'LICENSE'
+)
 noextract=()
-sha256sums=('c6cc84272c97b4d4dab056044b8ef6fe46a7873f94f2fb4c0e8d8c0df89a180a')
+sha256sums=()
 validpgpkeys=()
 
 #prepare() {}
-
-build() {
-	cd "$pkgname-$pkgver"
-	export CGO_ENABLED="0"
-	export GOFLAGS="-trimpath -mod=readonly -modcacherw"
-	go build -v -o "$pkgname"
-}
-
+#build() {}
 #check() {}
 
 package() {
-	cd "$pkgname-$pkgver"
-	install -Dm755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
-	install -Dm644 "pkg/systemd/$pkgname.sysusers" "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
-	install -Dm644 "pkg/systemd/$pkgname.service" "$pkgdir/usr/lib/systemd/system/$pkgname.service"
+	install -Dm755 "gesundheit" "$pkgdir/usr/bin/$pkgname"
+	install -Dm644 "gesundheit.toml" "$pkgdir/etc/$pkgname/$pkgname.toml"
+	install -Dm644 "gesundheit.service" "$pkgdir/usr/lib/systemd/system/$pkgname.service"
+	install -Dm644 "gesundheit.sysusers" "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
 	install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-	install -Dm644 "$pkgname.toml" "$pkgdir/etc/$pkgname/$pkgname.toml"
 	install -dm755 "$pkgdir/etc/$pkgname/modules.d"
 }
