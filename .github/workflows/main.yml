@@ -63,6 +63,8 @@ jobs:
     strategy:
       matrix:
         arch: ["x86_64", "armv7h", "aarch64"]
+    env:
+      CARCH: ${{ matrix.arch }}
     steps:
       - id: goarch
         run: |
@@ -83,21 +85,15 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: gesundheit-${{ steps.goarch.outputs.GOARCH }}
-          path: bin
+          path: build
       - uses: "actions/checkout@v2"
         with:
           path: src
       - run: |
-          mkdir build
           chown build:build build
-          sed "s/pkgver=/pkgver=${GITHUB_REF_NAME}/g" src/pkg/PKGBUILD > build/PKGBUILD
-          cp bin/gesundheit build
-          cp src/gesundheit.toml build
-          cp src/pkg/gesundheit.sysusers build
-          cp src/pkg/gesundheit.service build
-          cp src/LICENSE build
+          cp -Lr src/pkg/* build
           cd build
-          export CARCH="${{ matrix.arch }}"
+          sed -i "s/pkgver=/pkgver=${GITHUB_REF_NAME}/g" PKGBUILD
           su build -c "makepkg --sign --skipchecksums"
           su build -c "repo-add gesundheit.db.tar.gz gesundheit-*.pkg.tar.zst"
       - uses: actions/upload-artifact@v2
@@ -138,7 +134,7 @@ jobs:
           sudo install -Dm755 bin/gesundheit              gesundheit/usr/bin/gesundheit
           sudo install -Dm644 src/pkg/gesundheit.sysusers gesundheit/usr/lib/sysusers.d/gesundheit.conf
           sudo install -Dm644 src/pkg/gesundheit.service  gesundheit/usr/lib/systemd/system/gesundheit.service
-          sudo install -Dm644 src/gesundheit.toml         gesundheit/etc/gesundheit/gesundheit.toml
+          sudo install -Dm644 src/pkg/gesundheit.toml     gesundheit/etc/gesundheit/gesundheit.toml
           sudo install -dm755                             gesundheit/etc/gesundheit/modules.d
           dpkg-deb --build gesundheit "gesundheit_${GITHUB_REF_NAME}_${{ matrix.arch }}.deb"
       - uses: actions/upload-artifact@v2
