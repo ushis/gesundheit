@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -60,10 +63,16 @@ func main() {
 	if err := loadModuleConfigs(h, moduleConfigs); err != nil {
 		log.Fatalf("failed to load module config: %s", err)
 	}
-	go h.run()
+	ctx, stop := context.WithCancel(context.Background())
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go h.run(ctx, &wg)
 
 	chn := make(chan os.Signal, 1)
 	signal.Notify(chn, syscall.SIGINT, syscall.SIGTERM)
 	<-chn
-	h.stop()
+	fmt.Println("exit...")
+	stop()
+	wg.Wait()
+	fmt.Println("done")
 }

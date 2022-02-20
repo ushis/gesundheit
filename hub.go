@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"sync"
 
@@ -11,18 +12,12 @@ import (
 type hub struct {
 	checkRunners   []*check.Runner
 	handlerRunners []*handler.Runner
-	events         chan check.Event
-	done           chan struct{}
-	wg             sync.WaitGroup
 }
 
 func newHub() *hub {
 	return &hub{
 		checkRunners:   []*check.Runner{},
 		handlerRunners: []*handler.Runner{},
-		events:         make(chan check.Event),
-		done:           make(chan struct{}),
-		wg:             sync.WaitGroup{},
 	}
 }
 
@@ -34,35 +29,29 @@ func (h *hub) registerHandlerRunner(fn func() *handler.Runner) {
 	h.handlerRunners = append(h.handlerRunners, fn())
 }
 
-func (h *hub) run() {
-	h.wg.Add(1)
+func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	events := make(chan check.Event)
+	defer close(events)
+
+	rwg := sync.WaitGroup{}
 
 	for _, r := range h.checkRunners {
-		go r.Run(h.events)
+		rwg.Add(1)
+		go r.Run(ctx, &rwg, events)
 	}
 	for {
 		select {
-		case e := <-h.events:
+		case e := <-events:
 			for _, r := range h.handlerRunners {
 				if err := r.Handle(e); err != nil {
 					log.Println(err)
 				}
 			}
-		case <-h.done:
-			for _, r := range h.checkRunners {
-				r.Stop()
-			}
-			for _, r := range h.handlerRunners {
-				r.Close()
-			}
-			h.wg.Done()
+		case <-ctx.Done():
+			rwg.Wait()
 			return
 		}
 	}
-}
-
-func (h *hub) stop() {
-	close(h.done)
-	h.wg.Wait()
-	close(h.events)
 }

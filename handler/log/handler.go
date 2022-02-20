@@ -21,5 +21,3 @@ func (h Handler) Handle(e check.Event) error {
 	log.Printf("%s %s: %s", e.CheckDescription, e.Result, e.Message)
 	return nil
 }
-
-func (h Handler) Close() {}

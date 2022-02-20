@@ -1,6 +1,7 @@
 package check
 
 import (
+	"context"
 	"math/rand"
 	"sync"
 	"time"
@@ -11,8 +12,6 @@ type Runner struct {
 	interval    time.Duration
 	history     History
 	check       Check
-	stop        chan struct{}
-	wg          sync.WaitGroup
 }
 
 func NewRunner(description string, interval time.Duration, check Check) *Runner {
@@ -21,13 +20,12 @@ func NewRunner(description string, interval time.Duration, check Check) *Runner 
 		interval:    interval,
 		history:     OK,
 		check:       check,
-		stop:        make(chan struct{}),
-		wg:          sync.WaitGroup{},
 	}
 }
 
-func (r *Runner) Run(events chan<- Event) {
-	r.wg.Add(1)
+func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Event) {
+	defer wg.Done()
+
 	maxJitter := r.interval / 60
 	jitter := time.Duration(rand.Uint64() & uint64(2*maxJitter))
 	interval := r.interval + jitter - maxJitter
@@ -35,25 +33,21 @@ func (r *Runner) Run(events chan<- Event) {
 
 	select {
 	case <-time.After(delay):
-	case <-r.stop:
-		r.wg.Done()
+	case <-ctx.Done():
 		return
 	}
 	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 
 	for {
 		select {
 		case events <- r.exec():
-		case <-r.stop:
-			ticker.Stop()
-			r.wg.Done()
+		case <-ctx.Done():
 			return
 		}
 		select {
 		case <-ticker.C:
-		case <-r.stop:
-			ticker.Stop()
-			r.wg.Done()
+		case <-ctx.Done():
 			return
 		}
 	}
@@ -78,9 +72,4 @@ func (r *Runner) exec() (event Event) {
 		r.history = (r.history << 1) | OK
 	}
 	return event
-}
-
-func (r *Runner) Stop() {
-	close(r.stop)
-	r.wg.Wait()
 }
