@@ -2,7 +2,7 @@
 
 if test -x /usr/bin/systemctl; then
   /usr/bin/systemctl daemon-reload
-if
+fi
 
 if test -x /bin/systemd-sysusers; then
   /bin/systemd-sysusers gesundheit.conf
