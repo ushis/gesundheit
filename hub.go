@@ -74,4 +74,5 @@ func (h *hub) run() {
 func (h *hub) stop() {
 	close(h.done)
 	h.wg.Wait()
+	close(h.events)
 }

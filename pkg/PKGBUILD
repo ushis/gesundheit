@@ -1,0 +1,44 @@
+# Maintainer: ushi <ushi@honkgong.info>
+pkgname=gesundheit
+pkgver=
+pkgrel=1
+epoch=
+pkgdesc="Get notifications about unexpected system state from your local Gesundheitsdienst."
+arch=('i686' 'x86_64' 'armv7h' 'aarch64')
+url="https://github.com/ushis/gesundheit"
+license=('MIT')
+groups=()
+depends=()
+makedepends=('go')
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=(etc/gesundheit/gesundheit.toml)
+options=()
+install=
+changelog=
+source=(
+	'gesundheit'
+	'gesundheit.toml'
+	'gesundheit.service'
+	'gesundheit.sysusers'
+	'LICENSE'
+)
+noextract=()
+sha256sums=()
+validpgpkeys=()
+
+#prepare() {}
+#build() {}
+#check() {}
+
+package() {
+	install -Dm755 "gesundheit" "$pkgdir/usr/bin/$pkgname"
+	install -Dm644 "gesundheit.toml" "$pkgdir/etc/$pkgname/$pkgname.toml"
+	install -Dm644 "gesundheit.service" "$pkgdir/usr/lib/systemd/system/$pkgname.service"
+	install -Dm644 "gesundheit.sysusers" "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
+	install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -dm755 "$pkgdir/etc/$pkgname/modules.d"
+}

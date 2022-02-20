@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if test -x /bin/systemctl; then
+  /bin/systemctl daemon-reload
+fi
+
+if test -x /bin/systemd-sysusers; then
+  /bin/systemd-sysusers gesundheit.conf
+fi

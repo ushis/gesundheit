@@ -4,9 +4,9 @@ Get notifications about unexpected system state from your local Gesundheitsdiens
 
 ## Install
 
-#### Arch Linux
+#### Arch Linux & Debian
 
-Arch Linux users can install gesundheit via the
+Arch Linux & Debian users can install gesundheit via the
 [gesundheit repository](https://ushis.github.io/gesundheit/).
 
 #### Linux
