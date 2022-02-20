@@ -93,7 +93,7 @@ jobs:
     needs: [build]
     strategy:
       matrix:
-        arch: ["amd64", "armhf"]
+        arch: ["amd64", "armhf", "arm64"]
     steps:
       - id: goarch
         run: |
@@ -101,6 +101,8 @@ jobs:
             echo '::set-output name=GOARCH::amd64'
           elif test "${{ matrix.arch }}" = "armhf"; then
             echo '::set-output name=GOARCH::arm'
+          elif test "${{ matrix.arch }}" = "arm64"; then
+            echo '::set-output name=GOARCH::arm64'
           fi
       - uses: actions/download-artifact@v2
         with:
@@ -159,6 +161,10 @@ jobs:
         with:
           name: deb-armhf
           path: pkg/deb/armhf
+      - uses: actions/download-artifact@v2
+        with:
+          name: deb-arm64
+          path: pkg/deb/arm64
       - uses: "actions/checkout@v2"
         with:
           ref: gh-pages
