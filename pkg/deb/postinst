@@ -1,0 +1,5 @@
+#!/bin/sh
+
+if test -x /bin/systemd-sysusers; then
+  /bin/systemd-sysusers gesundheit.conf
+fi
