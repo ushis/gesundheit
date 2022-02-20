@@ -70,7 +70,7 @@ jobs:
       - run: |
           mkdir /build
           chown build:build /build
-          sed "s/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g" src/PKGBUILD > /build/PKGBUILD
+          sed "s/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g" src/pkg/PKGBUILD > /build/PKGBUILD
           cd /build
           export CARCH="${{ matrix.arch }}"
           export GOARCH="${{ steps.goarch.outputs.GOARCH }}"
@@ -85,28 +85,87 @@ jobs:
             /build/gesundheit.db*
             /build/gesundheit.files*
 
+  deb:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: "ubuntu-latest"
+    needs: [build]
+    strategy:
+      matrix:
+        arch: ["amd64", "armhf"]
+    steps:
+      - id: goarch
+        run: |
+          if test "${{ matrix.arch }}" = "amd64"; then
+            echo '::set-output name=GOARCH::amd64'
+          elif test "${{ matrix.arch }}" = "armhf"; then
+            echo '::set-output name=GOARCH::arm'
+          fi
+      - uses: actions/download-artifact@v2
+        with:
+          name: gesundheit-${{ steps.goarch.outputs.GOARCH }}
+          path: bin
+      - uses: "actions/checkout@v2"
+        with:
+          path: src
+      - run: |
+          echo -n "${PACKAGE_SIGNING_KEY}" | gpg --import
+        env:
+          PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
+      - run: |
+          sed -i "s#Architecture: .\+#Architecture: ${{ matrix.arch }}#g" src/pkg/deb/control
+          sed -i "s#Version: .\+#Version: ${GITHUB_REF_NAME}#g" src/pkg/deb/control
+          install -Dm644 src/pkg/deb/control                  gesundheit/DEBIAN/control
+          install -Dm755 src/pkg/deb/postinst                 gesundheit/DEBIAN/postinst
+          install -Dm755 bin/gesundheit                       gesundheit/usr/bin/gesundheit
+          install -Dm644 src/pkg/systemd/gesundheit.sysusers  gesundheit/usr/lib/sysusers.d/gesundheit.conf
+          install -Dm644 src/pkg/systemd/gesundheit.service   gesundheit/usr/lib/systemd/system/gesundheit.service
+          install -Dm644 src/gesundheit.toml                  gesundheit/etc/gesundheit/gesundheit.toml
+          install -dm755                                      gesundheit/etc/gesundheit/modules.d
+          dpkg-deb --build gesundheit "gesundheit_${GITHUB_REF_NAME}_${{ matrix.arch }}.deb"
+          apt-ftparchive packages . > Packages
+          gzip -k -f Packages
+          apt-ftparchive release . > Release
+          gpg --digest-algo SHA256 --armor --output Release.gpg --detach-sign Release
+          gpg --digest-algo SHA256 --clearsign --output InRelease Release
+      - uses: actions/upload-artifact@v2
+        with:
+          name: deb-${{ matrix.arch }}
+          path: |
+            *.deb
+            Packages*
+            Release*
+            InRelease
+
   pages:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [pkg]
+    needs: [pkg, deb]
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/download-artifact@v2
         with:
           name: pkg-x86_64
-          path: pkgs/x86_64
+          path: pkg/arch/x86_64
       - uses: actions/download-artifact@v2
         with:
           name: pkg-armv7h
-          path: pkgs/armv7h
+          path: pkg/arch/armv7h
+      - uses: actions/download-artifact@v2
+        with:
+          name: deb-amd64
+          path: pkg/deb/amd64
+      - uses: actions/download-artifact@v2
+        with:
+          name: deb-armhf
+          path: pkg/deb/armhf
       - uses: "actions/checkout@v2"
         with:
           ref: gh-pages
           path: pages
       - run: |
-          rm -rf pages/{x86_64,armv7h}
-          mv pkgs/{x86_64,armv7h} pages
+          rm -rf pages/{arch,deb}
+          mv pkg/{arch,deb} pages
           cd pages
-          (for f in **/gesundheit*; do echo "* [${f}](${f})"; done) > _repo.md
+          (for f in $(find arch deb -type f | sort); do echo "* [${f}](${f})"; done) > _repo.md
           git config user.name "Github Action"
           git config user.email "ushi+github-action@honkgong.info"
           git add .
