@@ -117,8 +117,8 @@ func loadCheckModule(hub *hub, conf *checkConfig, path string, meta toml.MetaDat
 	if err != nil {
 		return fmt.Errorf("failed to load check config: %s: %s", path, err.Error())
 	}
-	hub.registerCheckRunner(func(events chan<- check.Event) *check.Runner {
-		return check.NewRunner(conf.Description, interval, chk, events)
+	hub.registerCheckRunner(func() *check.Runner {
+		return check.NewRunner(conf.Description, interval, chk)
 	})
 	return nil
 }

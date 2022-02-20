@@ -26,8 +26,8 @@ func newHub() *hub {
 	}
 }
 
-func (h *hub) registerCheckRunner(fn func(chan<- check.Event) *check.Runner) {
-	h.checkRunners = append(h.checkRunners, fn(h.events))
+func (h *hub) registerCheckRunner(fn func() *check.Runner) {
+	h.checkRunners = append(h.checkRunners, fn())
 }
 
 func (h *hub) registerHandlerRunner(fn func() *handler.Runner) {
@@ -38,7 +38,7 @@ func (h *hub) run() {
 	h.wg.Add(1)
 
 	for _, r := range h.checkRunners {
-		go r.Run()
+		go r.Run(h.events)
 	}
 	for {
 		select {
@@ -64,4 +64,5 @@ func (h *hub) run() {
 func (h *hub) stop() {
 	close(h.done)
 	h.wg.Wait()
+	close(h.events)
 }
