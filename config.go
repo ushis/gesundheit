@@ -9,6 +9,7 @@ import (
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/filter"
 	"github.com/ushis/gesundheit/handler"
+	"github.com/ushis/gesundheit/input"
 )
 
 type config struct {
@@ -28,6 +29,7 @@ type modulesConfig struct {
 type moduleConfig struct {
 	Check   *checkConfig
 	Handler *handlerConfig
+	Input   *inputConfig
 }
 
 type checkConfig struct {
@@ -44,6 +46,11 @@ type handlerConfig struct {
 }
 
 type filterConfig struct {
+	Module string
+	Config toml.Primitive
+}
+
+type inputConfig struct {
 	Module string
 	Config toml.Primitive
 }
@@ -91,6 +98,9 @@ func loadModuleConf(hub *hub, path string) error {
 	if mod.Handler != nil {
 		return loadHandlerModule(hub, mod.Handler, path, meta)
 	}
+	if mod.Input != nil {
+		return loadInputModule(hub, mod.Input, path, meta)
+	}
 	return fmt.Errorf("failed to load module config: %s: missing module configuration", path)
 }
 
@@ -117,8 +127,8 @@ func loadCheckModule(hub *hub, conf *checkConfig, path string, meta toml.MetaDat
 	if err != nil {
 		return fmt.Errorf("failed to load check config: %s: %s", path, err.Error())
 	}
-	hub.registerCheckRunner(func(events chan<- check.Event) *check.Runner {
-		return check.NewRunner(conf.Description, interval, chk, events)
+	hub.registerCheckRunner(func() *check.Runner {
+		return check.NewRunner(conf.Description, interval, chk)
 	})
 	return nil
 }
@@ -163,4 +173,25 @@ func loadFilterModule(conf *filterConfig, path string, meta toml.MetaData) (filt
 	return fn(func(cfg interface{}) error {
 		return meta.PrimitiveDecode(conf.Config, cfg)
 	})
+}
+
+func loadInputModule(hub *hub, conf *inputConfig, path string, meta toml.MetaData) error {
+	fn, err := input.Get(conf.Module)
+
+	if err != nil {
+		return fmt.Errorf("failed to load input config: %s: %s", path, err.Error())
+	}
+	in, err := fn(func(cfg interface{}) error {
+		return meta.PrimitiveDecode(conf.Config, cfg)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to load input config: %s: %s", path, err.Error())
+	}
+	if len(meta.Undecoded()) > 0 {
+		return fmt.Errorf("failed to load input config: %s: unknown field %s", path, meta.Undecoded()[0])
+	}
+	hub.registerInputRunner(func() *input.Runner {
+		return input.NewRunner(in)
+	})
+	return nil
 }

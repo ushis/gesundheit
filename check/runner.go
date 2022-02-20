@@ -11,24 +11,22 @@ type Runner struct {
 	interval    time.Duration
 	history     History
 	check       Check
-	events      chan<- Event
 	stop        chan struct{}
 	wg          sync.WaitGroup
 }
 
-func NewRunner(description string, interval time.Duration, check Check, events chan<- Event) *Runner {
+func NewRunner(description string, interval time.Duration, check Check) *Runner {
 	return &Runner{
 		description: description,
 		interval:    interval,
 		history:     OK,
 		check:       check,
-		events:      events,
 		stop:        make(chan struct{}),
 		wg:          sync.WaitGroup{},
 	}
 }
 
-func (r *Runner) Run() {
+func (r *Runner) Run(events chan<- Event) {
 	r.wg.Add(1)
 	maxJitter := r.interval / 60
 	jitter := time.Duration(rand.Uint64() & uint64(2*maxJitter))
@@ -45,7 +43,7 @@ func (r *Runner) Run() {
 
 	for {
 		select {
-		case r.events <- r.exec():
+		case events <- r.exec():
 		case <-r.stop:
 			ticker.Stop()
 			r.wg.Done()
