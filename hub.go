@@ -36,9 +36,9 @@ func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) {
 	defer close(events)
 
 	rwg := sync.WaitGroup{}
+	rwg.Add(len(h.checkRunners))
 
 	for _, r := range h.checkRunners {
-		rwg.Add(1)
 		go r.Run(ctx, &rwg, events)
 	}
 	for {

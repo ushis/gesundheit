@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -63,16 +62,16 @@ func main() {
 	if err := loadModuleConfigs(h, moduleConfigs); err != nil {
 		log.Fatalf("failed to load module config: %s", err)
 	}
-	ctx, stop := context.WithCancel(context.Background())
 	wg := sync.WaitGroup{}
+	ctx, stop := context.WithCancel(context.Background())
+
 	wg.Add(1)
 	go h.run(ctx, &wg)
 
 	chn := make(chan os.Signal, 1)
 	signal.Notify(chn, syscall.SIGINT, syscall.SIGTERM)
 	<-chn
-	fmt.Println("exit...")
+
 	stop()
 	wg.Wait()
-	fmt.Println("done")
 }
