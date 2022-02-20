@@ -30,15 +30,27 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build]
     runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        arch: ["386", "amd64", "arm", "arm64"]
     steps:
       - uses: actions/download-artifact@v2
         with:
-          name: gesundheit-${{ matrix.arch }}
+          name: gesundheit-386
+          path: bin/386
+      - uses: actions/download-artifact@v2
+        with:
+          name: gesundheit-amd64
+          path: bin/amd64
+      - uses: actions/download-artifact@v2
+        with:
+          name: gesundheit-arm
+          path: bin/arm
+      - uses: actions/download-artifact@v2
+        with:
+          name: gesundheit-arm64
+          path: bin/arm64
       - run: |
-          mv gesundheit "gesundheit-${GITHUB_REF_NAME}-${{ matrix.arch }}"
+          for d in bin/*; do
+            mv "${d}/gesundheit" "gesundheit-${GITHUB_REF_NAME}-${d##*/}"
+          done
       - uses: "softprops/action-gh-release@v1"
         with:
           files: "gesundheit-*"
@@ -53,11 +65,11 @@ jobs:
     steps:
       - id: goarch
         run: |
-          if test "${{ matrix.arch }}" = "x86_64"; then
-            echo '::set-output name=GOARCH::amd64'
-          elif test "${{ matrix.arch }}" = "armv7h"; then
-            echo '::set-output name=GOARCH::arm'
-          fi
+          case "${{ matrix.arch }}" in
+            "x86_64") echo "::set-output name=GOARCH::amd64";;
+            "armv7h") echo "::set-output name=GOARCH::arm";;
+            *) echo "::set-output name=GOARCH::${{ matrix.arch }}";;
+          esac
       - run: |
           pacman -Syu --noconfirm
           pacman -S --noconfirm git go
@@ -93,17 +105,15 @@ jobs:
     needs: [build]
     strategy:
       matrix:
-        arch: ["amd64", "armhf", "arm64"]
+        arch: ["i386", "amd64", "armhf", "arm64"]
     steps:
       - id: goarch
         run: |
-          if test "${{ matrix.arch }}" = "amd64"; then
-            echo '::set-output name=GOARCH::amd64'
-          elif test "${{ matrix.arch }}" = "armhf"; then
-            echo '::set-output name=GOARCH::arm'
-          elif test "${{ matrix.arch }}" = "arm64"; then
-            echo '::set-output name=GOARCH::arm64'
-          fi
+          case "${{ matrix.arch }}" in
+            "i386") echo "::set-output name=GOARCH::386";;
+            "armhf") echo "::set-output name=GOARCH::arm";;
+            *) echo "::set-output name=GOARCH::${{ matrix.arch }}";;
+          esac
       - uses: actions/download-artifact@v2
         with:
           name: gesundheit-${{ steps.goarch.outputs.GOARCH }}
@@ -111,10 +121,6 @@ jobs:
       - uses: "actions/checkout@v2"
         with:
           path: src
-      - run: |
-          echo -n "${PACKAGE_SIGNING_KEY}" | gpg --import
-        env:
-          PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
       - run: |
           sed -i "s#Architecture: .\+#Architecture: ${{ matrix.arch }}#g" src/pkg/deb/control
           sed -i "s#Version: .\+#Version: ${GITHUB_REF_NAME}#g" src/pkg/deb/control
@@ -126,6 +132,34 @@ jobs:
           sudo install -Dm644 src/gesundheit.toml                  gesundheit/etc/gesundheit/gesundheit.toml
           sudo install -dm755                                      gesundheit/etc/gesundheit/modules.d
           dpkg-deb --build gesundheit "gesundheit_${GITHUB_REF_NAME}_${{ matrix.arch }}.deb"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: "deb-${{ matrix.arch }}"
+          path: "*.deb"
+
+  deb-repo:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [deb]
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: deb-i386
+      - uses: actions/download-artifact@v2
+        with:
+          name: deb-amd64
+      - uses: actions/download-artifact@v2
+        with:
+          name: deb-armhf
+      - uses: actions/download-artifact@v2
+        with:
+          name: deb-arm64
+      - run: |
+          echo -n "${PACKAGE_SIGNING_KEY}" | gpg --import
+        env:
+          PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
+      - run: |
+          ls -lR
           apt-ftparchive packages . > Packages
           gzip -k -f Packages
           apt-ftparchive release . > Release
@@ -133,7 +167,7 @@ jobs:
           gpg --digest-algo SHA256 --clearsign --output InRelease Release
       - uses: actions/upload-artifact@v2
         with:
-          name: deb-${{ matrix.arch }}
+          name: deb-repo
           path: |
             *.deb
             Packages*
@@ -142,7 +176,7 @@ jobs:
 
   pages:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [pkg, deb]
+    needs: [pkg, deb-repo]
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/download-artifact@v2
@@ -155,16 +189,8 @@ jobs:
           path: pkg/arch/armv7h
       - uses: actions/download-artifact@v2
         with:
-          name: deb-amd64
-          path: pkg/deb/amd64
-      - uses: actions/download-artifact@v2
-        with:
-          name: deb-armhf
-          path: pkg/deb/armhf
-      - uses: actions/download-artifact@v2
-        with:
-          name: deb-arm64
-          path: pkg/deb/arm64
+          name: deb-repo
+          path: pkg/deb
       - uses: "actions/checkout@v2"
         with:
           ref: gh-pages
