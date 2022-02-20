@@ -70,7 +70,7 @@ jobs:
       - run: |
           mkdir /build
           chown build:build /build
-          sed "s/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g" src/PKGBUILD > /build/PKGBUILD
+          sed "s/pkgver=.\+/pkgver=${GITHUB_REF_NAME}/g" src/pkg/PKGBUILD > /build/PKGBUILD
           cd /build
           export CARCH="${{ matrix.arch }}"
           export GOARCH="${{ steps.goarch.outputs.GOARCH }}"
