@@ -46,7 +46,7 @@ type Message struct {
 
 func (h Handler) Handle(e check.Event) error {
 	msg := Message{
-		Title:    fmt.Sprintf("%s %s", e.CheckDescription, e.Result),
+		Title:    fmt.Sprintf("(%s) %s %s", e.NodeName, e.CheckDescription, e.Result),
 		Message:  e.Message,
 		Priority: h.Priority,
 	}
@@ -72,5 +72,3 @@ func (h Handler) Handle(e check.Event) error {
 	}
 	return nil
 }
-
-func (h Handler) Close() {}

@@ -5,4 +5,5 @@ type Event struct {
 	Message          string
 	CheckDescription string
 	CheckHistory     History
+	NodeName         string
 }

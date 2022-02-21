@@ -7,7 +7,7 @@ Get notifications about unexpected system state from your local Gesundheitsdiens
 #### Arch Linux & Debian
 
 Arch Linux & Debian users can install gesundheit via the
-[gesundheit repository](https://ushis.github.io/gesundheit/).
+[gesundheit package repository](https://ushis.github.io/gesundheit/).
 
 #### Linux
 
@@ -196,7 +196,7 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     <tr>
       <td>MaxAge</td>
       <td>
-        Max age of the file for beeing considered healthy,
+        Max age of the file considered healthy,
         e.g. <code>"1h5m10s"</code>
       </td>
     </tr>

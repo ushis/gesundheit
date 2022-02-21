@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -10,9 +11,11 @@ import (
 	"github.com/ushis/gesundheit/filter"
 	"github.com/ushis/gesundheit/handler"
 	"github.com/ushis/gesundheit/input"
+	"github.com/ushis/gesundheit/node"
 )
 
 type config struct {
+	Node    node.Info
 	Log     logConfig
 	Modules modulesConfig
 }
@@ -26,7 +29,7 @@ type modulesConfig struct {
 	Config string
 }
 
-type moduleConfig struct {
+type modConfig struct {
 	Check   *checkConfig
 	Handler *handlerConfig
 	Input   *inputConfig
@@ -68,43 +71,60 @@ func loadConf(path string) (config, error) {
 	if len(meta.Undecoded()) > 0 {
 		return conf, fmt.Errorf("failed to load config: %s: unknown field %s", path, meta.Undecoded()[0])
 	}
+	if conf.Node.Name == "" {
+		hostname, err := os.Hostname()
+
+		if err != nil {
+			return conf, fmt.Errorf("failed to determine hostname: %s", err)
+		}
+		conf.Node.Name = hostname
+	}
 	return conf, nil
 }
 
-func loadModuleConfigs(hub *hub, glob string) error {
+type modConfLoader struct {
+	node node.Info
+	hub  *hub
+}
+
+func newModConfLoader(node node.Info, hub *hub) modConfLoader {
+	return modConfLoader{node, hub}
+}
+
+func (l modConfLoader) loadAll(glob string) error {
 	paths, err := filepath.Glob(glob)
 
 	if err != nil {
 		return err
 	}
 	for _, path := range paths {
-		if err := loadModuleConf(hub, path); err != nil {
+		if err := l.load(path); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func loadModuleConf(hub *hub, path string) error {
-	mod := moduleConfig{}
+func (l modConfLoader) load(path string) error {
+	mod := modConfig{}
 	meta, err := toml.DecodeFile(path, &mod)
 
 	if err != nil {
 		return err
 	}
 	if mod.Check != nil {
-		return loadCheckModule(hub, mod.Check, path, meta)
+		return l.loadCheck(mod.Check, path, meta)
 	}
 	if mod.Handler != nil {
-		return loadHandlerModule(hub, mod.Handler, path, meta)
+		return l.loadHandler(mod.Handler, path, meta)
 	}
 	if mod.Input != nil {
-		return loadInputModule(hub, mod.Input, path, meta)
+		return l.loadInput(mod.Input, path, meta)
 	}
 	return fmt.Errorf("failed to load module config: %s: missing module configuration", path)
 }
 
-func loadCheckModule(hub *hub, conf *checkConfig, path string, meta toml.MetaData) error {
+func (l modConfLoader) loadCheck(conf *checkConfig, path string, meta toml.MetaData) error {
 	fn, err := check.Get(conf.Module)
 
 	if err != nil {
@@ -127,13 +147,12 @@ func loadCheckModule(hub *hub, conf *checkConfig, path string, meta toml.MetaDat
 	if err != nil {
 		return fmt.Errorf("failed to load check config: %s: %s", path, err.Error())
 	}
-	hub.registerCheckRunner(func() *check.Runner {
-		return check.NewRunner(conf.Description, interval, chk)
-	})
+	l.hub.registerCheckRunner(check.NewRunner(l.node, conf.Description, interval, chk))
+
 	return nil
 }
 
-func loadHandlerModule(hub *hub, conf *handlerConfig, path string, meta toml.MetaData) error {
+func (l modConfLoader) loadHandler(conf *handlerConfig, path string, meta toml.MetaData) error {
 	fn, err := handler.Get(conf.Module)
 
 	if err != nil {
@@ -148,23 +167,22 @@ func loadHandlerModule(hub *hub, conf *handlerConfig, path string, meta toml.Met
 	filters := []filter.Filter{}
 
 	for _, cfg := range conf.Filter {
-		f, err := loadFilterModule(cfg, path, meta)
+		f, err := l.loadFilter(cfg, path, meta)
 
 		if err != nil {
 			return fmt.Errorf("failed to load handler config: %s: %s", path, err.Error())
 		}
 		filters = append(filters, f)
 	}
-	hub.registerHandlerRunner(func() *handler.Runner {
-		return handler.NewRunner(hdl, filters)
-	})
+	l.hub.registerHandlerRunner(handler.NewRunner(hdl, filters))
+
 	if len(meta.Undecoded()) > 0 {
 		return fmt.Errorf("failed to load handler config: %s: unknown field %s", path, meta.Undecoded()[0])
 	}
 	return nil
 }
 
-func loadFilterModule(conf *filterConfig, path string, meta toml.MetaData) (filter.Filter, error) {
+func (l modConfLoader) loadFilter(conf *filterConfig, path string, meta toml.MetaData) (filter.Filter, error) {
 	fn, err := filter.Get(conf.Module)
 
 	if err != nil {
@@ -175,7 +193,7 @@ func loadFilterModule(conf *filterConfig, path string, meta toml.MetaData) (filt
 	})
 }
 
-func loadInputModule(hub *hub, conf *inputConfig, path string, meta toml.MetaData) error {
+func (l modConfLoader) loadInput(conf *inputConfig, path string, meta toml.MetaData) error {
 	fn, err := input.Get(conf.Module)
 
 	if err != nil {
@@ -190,8 +208,7 @@ func loadInputModule(hub *hub, conf *inputConfig, path string, meta toml.MetaDat
 	if len(meta.Undecoded()) > 0 {
 		return fmt.Errorf("failed to load input config: %s: unknown field %s", path, meta.Undecoded()[0])
 	}
-	hub.registerInputRunner(func() *input.Runner {
-		return input.NewRunner(in)
-	})
+	l.hub.registerInputRunner(input.NewRunner(in))
+
 	return nil
 }

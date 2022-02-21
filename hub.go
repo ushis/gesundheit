@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"sync"
 
@@ -13,9 +14,6 @@ type hub struct {
 	checkRunners   []*check.Runner
 	handlerRunners []*handler.Runner
 	inputRunners   []*input.Runner
-	events         chan check.Event
-	done           chan struct{}
-	wg             sync.WaitGroup
 }
 
 func newHub() *hub {
@@ -23,56 +21,47 @@ func newHub() *hub {
 		checkRunners:   []*check.Runner{},
 		handlerRunners: []*handler.Runner{},
 		inputRunners:   []*input.Runner{},
-		events:         make(chan check.Event),
-		done:           make(chan struct{}),
-		wg:             sync.WaitGroup{},
 	}
 }
 
-func (h *hub) registerCheckRunner(fn func() *check.Runner) {
-	h.checkRunners = append(h.checkRunners, fn())
+func (h *hub) registerCheckRunner(r *check.Runner) {
+	h.checkRunners = append(h.checkRunners, r)
 }
 
-func (h *hub) registerHandlerRunner(fn func() *handler.Runner) {
-	h.handlerRunners = append(h.handlerRunners, fn())
+func (h *hub) registerHandlerRunner(r *handler.Runner) {
+	h.handlerRunners = append(h.handlerRunners, r)
 }
 
-func (h *hub) registerInputRunner(fn func() *input.Runner) {
-	h.inputRunners = append(h.inputRunners, fn())
+func (h *hub) registerInputRunner(r *input.Runner) {
+	h.inputRunners = append(h.inputRunners, r)
 }
 
-func (h *hub) run() {
-	h.wg.Add(1)
+func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	events := make(chan check.Event)
+	defer close(events)
+
+	rwg := sync.WaitGroup{}
+	rwg.Add(len(h.checkRunners))
 
 	for _, r := range h.checkRunners {
-		go r.Run(h.events)
+		go r.Run(ctx, &rwg, events)
 	}
 	for _, r := range h.inputRunners {
-		go r.Run(h.events)
+		go r.Run(events)
 	}
 	for {
 		select {
-		case e := <-h.events:
+		case e := <-events:
 			for _, r := range h.handlerRunners {
 				if err := r.Handle(e); err != nil {
 					log.Println(err)
 				}
 			}
-		case <-h.done:
-			for _, r := range h.checkRunners {
-				r.Stop()
-			}
-			for _, r := range h.handlerRunners {
-				r.Close()
-			}
-			h.wg.Done()
+		case <-ctx.Done():
+			rwg.Wait()
 			return
 		}
 	}
-}
-
-func (h *hub) stop() {
-	close(h.done)
-	h.wg.Wait()
-	close(h.events)
 }

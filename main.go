@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"io"
 	"log"
 	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -32,9 +35,9 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
+	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 
 	conf, err := loadConf(confPath)
@@ -42,30 +45,44 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %s", err)
 	}
-	if conf.Log.Path != "-" {
-		f, err := os.OpenFile(conf.Log.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0640)
+	f, err := openLog(conf.Log.Path)
 
-		if err != nil {
-			log.Fatalf("failed to open log file: %s", err)
-		}
-		defer f.Close()
-
-		log.SetOutput(f)
+	if err != nil {
+		log.Fatalf("failed to open log file: %s", err)
 	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	if conf.Log.Timestamps {
 		log.SetFlags(log.Ldate | log.Ltime)
 	}
 	h := newHub()
-	confDir := filepath.Dir(confPath)
-	moduleConfigs := filepath.Join(confDir, conf.Modules.Config)
 
-	if err := loadModuleConfigs(h, moduleConfigs); err != nil {
+	confDir := filepath.Dir(confPath)
+	modConfs := filepath.Join(confDir, conf.Modules.Config)
+	modConfLoader := newModConfLoader(conf.Node, h)
+
+	if err := modConfLoader.loadAll(modConfs); err != nil {
 		log.Fatalf("failed to load module config: %s", err)
 	}
-	go h.run()
+	wg := sync.WaitGroup{}
+	ctx, stop := context.WithCancel(context.Background())
+
+	wg.Add(1)
+	go h.run(ctx, &wg)
 
 	chn := make(chan os.Signal, 1)
 	signal.Notify(chn, syscall.SIGINT, syscall.SIGTERM)
 	<-chn
-	h.stop()
+
+	stop()
+	wg.Wait()
+}
+
+func openLog(path string) (io.WriteCloser, error) {
+	if path == "-" {
+		return os.Stdout, nil
+	}
+	return os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0640)
 }

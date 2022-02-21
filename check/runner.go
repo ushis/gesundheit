@@ -1,33 +1,34 @@
 package check
 
 import (
+	"context"
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/ushis/gesundheit/node"
 )
 
 type Runner struct {
+	node        node.Info
 	description string
 	interval    time.Duration
-	history     History
 	check       Check
-	stop        chan struct{}
-	wg          sync.WaitGroup
+	history     History
 }
 
-func NewRunner(description string, interval time.Duration, check Check) *Runner {
+func NewRunner(node node.Info, description string, interval time.Duration, check Check) *Runner {
 	return &Runner{
+		node:        node,
 		description: description,
 		interval:    interval,
-		history:     OK,
 		check:       check,
-		stop:        make(chan struct{}),
-		wg:          sync.WaitGroup{},
 	}
 }
 
-func (r *Runner) Run(events chan<- Event) {
-	r.wg.Add(1)
+func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Event) {
+	defer wg.Done()
+
 	maxJitter := r.interval / 60
 	jitter := time.Duration(rand.Uint64() & uint64(2*maxJitter))
 	interval := r.interval + jitter - maxJitter
@@ -35,52 +36,41 @@ func (r *Runner) Run(events chan<- Event) {
 
 	select {
 	case <-time.After(delay):
-	case <-r.stop:
-		r.wg.Done()
+	case <-ctx.Done():
 		return
 	}
 	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 
 	for {
+		e := r.exec()
+		r.history.Append(e.Result)
+
 		select {
-		case events <- r.exec():
-		case <-r.stop:
-			ticker.Stop()
-			r.wg.Done()
+		case events <- e:
+		case <-ctx.Done():
 			return
 		}
 		select {
 		case <-ticker.C:
-		case <-r.stop:
-			ticker.Stop()
-			r.wg.Done()
+		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func (r *Runner) exec() (event Event) {
-	if msg, err := r.check.Exec(); err != nil {
-		event = Event{
-			Result:           CRITICAL,
-			Message:          err.Error(),
-			CheckDescription: r.description,
-			CheckHistory:     r.history,
-		}
-		r.history = (r.history << 1) | CRITICAL
-	} else {
-		event = Event{
-			Result:           OK,
-			Message:          msg,
-			CheckDescription: r.description,
-			CheckHistory:     r.history,
-		}
-		r.history = (r.history << 1) | OK
+func (r *Runner) exec() Event {
+	e := Event{
+		CheckDescription: r.description,
+		CheckHistory:     r.history,
+		NodeName:         r.node.Name,
 	}
-	return event
-}
-
-func (r *Runner) Stop() {
-	close(r.stop)
-	r.wg.Wait()
+	if msg, err := r.check.Exec(); err != nil {
+		e.Result = CRITICAL
+		e.Message = err.Error()
+	} else {
+		e.Result = OK
+		e.Message = msg
+	}
+	return e
 }
