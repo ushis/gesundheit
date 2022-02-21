@@ -10,15 +10,14 @@ import (
 type Runner struct {
 	description string
 	interval    time.Duration
-	history     History
 	check       Check
+	history     History
 }
 
 func NewRunner(description string, interval time.Duration, check Check) *Runner {
 	return &Runner{
 		description: description,
 		interval:    interval,
-		history:     OK,
 		check:       check,
 	}
 }
@@ -40,8 +39,11 @@ func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Even
 	defer ticker.Stop()
 
 	for {
+		e := r.exec()
+		r.history.Append(e.Result)
+
 		select {
-		case events <- r.exec():
+		case events <- e:
 		case <-ctx.Done():
 			return
 		}
@@ -53,23 +55,20 @@ func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Even
 	}
 }
 
-func (r *Runner) exec() (event Event) {
+func (r *Runner) exec() Event {
 	if msg, err := r.check.Exec(); err != nil {
-		event = Event{
+		return Event{
 			Result:           CRITICAL,
 			Message:          err.Error(),
 			CheckDescription: r.description,
 			CheckHistory:     r.history,
 		}
-		r.history = (r.history << 1) | CRITICAL
 	} else {
-		event = Event{
+		return Event{
 			Result:           OK,
 			Message:          msg,
 			CheckDescription: r.description,
 			CheckHistory:     r.history,
 		}
-		r.history = (r.history << 1) | OK
 	}
-	return event
 }

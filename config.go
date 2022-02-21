@@ -64,7 +64,7 @@ func loadConf(path string) (config, error) {
 	return conf, nil
 }
 
-func loadModuleConfigs(hub *hub, glob string) error {
+func loadModuleConfs(hub *hub, glob string) error {
 	paths, err := filepath.Glob(glob)
 
 	if err != nil {
@@ -117,9 +117,8 @@ func loadCheckModule(hub *hub, conf *checkConfig, path string, meta toml.MetaDat
 	if err != nil {
 		return fmt.Errorf("failed to load check config: %s: %s", path, err.Error())
 	}
-	hub.registerCheckRunner(func() *check.Runner {
-		return check.NewRunner(conf.Description, interval, chk)
-	})
+	hub.registerCheckRunner(check.NewRunner(conf.Description, interval, chk))
+
 	return nil
 }
 
@@ -145,9 +144,8 @@ func loadHandlerModule(hub *hub, conf *handlerConfig, path string, meta toml.Met
 		}
 		filters = append(filters, f)
 	}
-	hub.registerHandlerRunner(func() *handler.Runner {
-		return handler.NewRunner(hdl, filters)
-	})
+	hub.registerHandlerRunner(handler.NewRunner(hdl, filters))
+
 	if len(meta.Undecoded()) > 0 {
 		return fmt.Errorf("failed to load handler config: %s: unknown field %s", path, meta.Undecoded()[0])
 	}

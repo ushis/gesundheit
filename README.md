@@ -196,7 +196,7 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     <tr>
       <td>MaxAge</td>
       <td>
-        Max age of the file for beeing considered healthy,
+        Max age of the file considered healthy,
         e.g. <code>"1h5m10s"</code>
       </td>
     </tr>

@@ -21,12 +21,12 @@ func newHub() *hub {
 	}
 }
 
-func (h *hub) registerCheckRunner(fn func() *check.Runner) {
-	h.checkRunners = append(h.checkRunners, fn())
+func (h *hub) registerCheckRunner(r *check.Runner) {
+	h.checkRunners = append(h.checkRunners, r)
 }
 
-func (h *hub) registerHandlerRunner(fn func() *handler.Runner) {
-	h.handlerRunners = append(h.handlerRunners, fn())
+func (h *hub) registerHandlerRunner(r *handler.Runner) {
+	h.handlerRunners = append(h.handlerRunners, r)
 }
 
 func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) {
