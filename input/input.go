@@ -1,8 +1,12 @@
 package input
 
-import "github.com/ushis/gesundheit/check"
+import (
+	"context"
+	"sync"
+
+	"github.com/ushis/gesundheit/check"
+)
 
 type Input interface {
-	Run(chan<- check.Event)
-	Close()
+	Run(ctx context.Context, wg *sync.WaitGroup, events chan<- check.Event) error
 }

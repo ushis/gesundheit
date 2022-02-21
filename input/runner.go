@@ -1,6 +1,11 @@
 package input
 
-import "github.com/ushis/gesundheit/check"
+import (
+	"context"
+	"sync"
+
+	"github.com/ushis/gesundheit/check"
+)
 
 type Runner struct {
 	Input
@@ -10,10 +15,6 @@ func NewRunner(i Input) *Runner {
 	return &Runner{i}
 }
 
-func (r *Runner) Run(events chan<- check.Event) {
-	r.Input.Run(events)
-}
-
-func (r *Runner) Close() {
-	r.Input.Close()
+func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- check.Event) error {
+	return r.Input.Run(ctx, wg, events)
 }

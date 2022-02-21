@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sync"
 	"syscall"
 	"time"
 
@@ -43,12 +42,12 @@ func main() {
 	conf, err := loadConf(confPath)
 
 	if err != nil {
-		log.Fatalf("failed to load config: %s", err)
+		log.Fatalln("failed to load config:", err)
 	}
 	f, err := openLog(conf.Log.Path)
 
 	if err != nil {
-		log.Fatalf("failed to open log file: %s", err)
+		log.Fatalln("failed to open log file:", err)
 	}
 	defer f.Close()
 
@@ -64,20 +63,21 @@ func main() {
 	modConfLoader := newModConfLoader(conf.Node, h)
 
 	if err := modConfLoader.loadAll(modConfs); err != nil {
-		log.Fatalf("failed to load module config: %s", err)
+		log.Fatalln("failed to load module config:", err)
 	}
-	wg := sync.WaitGroup{}
 	ctx, stop := context.WithCancel(context.Background())
+	done, err := h.run(ctx)
 
-	wg.Add(1)
-	go h.run(ctx, &wg)
+	if err != nil {
+		log.Fatalln("failed to start:", err)
+	}
 
-	chn := make(chan os.Signal, 1)
-	signal.Notify(chn, syscall.SIGINT, syscall.SIGTERM)
-	<-chn
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	<-sig
 
 	stop()
-	wg.Wait()
+	<-done
 }
 
 func openLog(path string) (io.WriteCloser, error) {

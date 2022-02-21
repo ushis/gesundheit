@@ -26,9 +26,18 @@ func NewRunner(node node.Info, description string, interval time.Duration, check
 	}
 }
 
-func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Event) {
-	defer wg.Done()
+func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Event) error {
+	wg.Add(1)
 
+	go func() {
+		r.run(ctx, events)
+		wg.Done()
+	}()
+
+	return nil
+}
+
+func (r *Runner) run(ctx context.Context, events chan<- Event) {
 	maxJitter := r.interval / 60
 	jitter := time.Duration(rand.Uint64() & uint64(2*maxJitter))
 	interval := r.interval + jitter - maxJitter

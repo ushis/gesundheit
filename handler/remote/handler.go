@@ -70,11 +70,8 @@ func (h Handler) Handle(e check.Event) error {
 	if err != nil {
 		return err
 	}
-	// TODO: We should probably keep that open...
 	defer conn.Close()
 
 	_, err = conn.Write(ciphertext)
 	return err
 }
-
-func (h Handler) Close() {}

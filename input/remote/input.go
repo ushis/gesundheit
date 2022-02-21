@@ -1,9 +1,12 @@
 package remote
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net"
+	"sync"
 
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/crypto"
@@ -58,50 +61,66 @@ func New(configure func(interface{}) error) (input.Input, error) {
 	return &Input{Addr: conf.Listen, Peers: peers}, nil
 }
 
-func (i *Input) Run(events chan<- check.Event) {
+func (i *Input) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- check.Event) error {
 	conn, err := net.ListenPacket("udp", i.Addr)
 
 	if err != nil {
-		panic(err) // TODO
+		return err
 	}
-	defer conn.Close()
+	wg.Add(1)
 
-	buf := make([]byte, 4096)
+	go func() {
+		i.serve(conn, events)
+		wg.Done()
+	}()
+
+	go func() {
+		<-ctx.Done()
+		conn.Close()
+	}()
+
+	return nil
+}
+
+func (i Input) serve(conn net.PacketConn, events chan<- check.Event) {
+	plain := make([]byte, 1024)
+	packet := make([]byte, 1024)
 
 	for {
-		n, _, err := conn.ReadFrom(buf)
+		n, _, err := conn.ReadFrom(packet)
 
 		if n > 0 {
-			e, err := i.decodePacket(buf[:n])
-
-			if err != nil {
-				print(err)
+			if e, err := i.decodePacket(plain, packet[:n]); err != nil {
+				log.Println("failed to decode packet:", err)
 			} else {
 				events <- e
 			}
 		}
+		if errors.Is(err, net.ErrClosed) {
+			return
+		}
 		if err != nil {
-			print(err)
+			log.Println("failed to read packet", err)
 		}
 	}
 }
 
-func (i Input) decodePacket(ciphertext []byte) (e check.Event, err error) {
-	buf := make([]byte, 4096)
+func (i Input) decodePacket(buf, packet []byte) (e check.Event, err error) {
+	plaintext, err := i.decryptPacket(buf[:0], packet)
 
-	for _, peer := range i.Peers {
-		plaintext, err := crypto.Decrypt(peer, buf, ciphertext)
-
-		if err != nil {
-			print(err)
-			continue
-		}
-		err = json.Unmarshal(plaintext, &e)
+	if err != nil {
 		return e, err
 	}
-	return e, errors.New("failed to decode packet")
+	return e, json.Unmarshal(plaintext, &e)
 }
 
-func (i *Input) Close() {
-	// TODO
+func (i Input) decryptPacket(dest, ciphertext []byte) ([]byte, error) {
+	for _, peer := range i.Peers {
+		plaintext, err := crypto.Decrypt(peer, dest, ciphertext)
+
+		if err == nil {
+			return plaintext, nil
+		}
+	}
+	return nil, errors.New("failed to decrypt packet")
 }
