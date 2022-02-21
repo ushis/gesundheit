@@ -5,17 +5,21 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/ushis/gesundheit/node"
 )
 
 type Runner struct {
+	node        node.Info
 	description string
 	interval    time.Duration
 	check       Check
 	history     History
 }
 
-func NewRunner(description string, interval time.Duration, check Check) *Runner {
+func NewRunner(node node.Info, description string, interval time.Duration, check Check) *Runner {
 	return &Runner{
+		node:        node,
 		description: description,
 		interval:    interval,
 		check:       check,
@@ -56,19 +60,17 @@ func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Even
 }
 
 func (r *Runner) exec() Event {
-	if msg, err := r.check.Exec(); err != nil {
-		return Event{
-			Result:           CRITICAL,
-			Message:          err.Error(),
-			CheckDescription: r.description,
-			CheckHistory:     r.history,
-		}
-	} else {
-		return Event{
-			Result:           OK,
-			Message:          msg,
-			CheckDescription: r.description,
-			CheckHistory:     r.history,
-		}
+	e := Event{
+		CheckDescription: r.description,
+		CheckHistory:     r.history,
+		NodeName:         r.node.Name,
 	}
+	if msg, err := r.check.Exec(); err != nil {
+		e.Result = CRITICAL
+		e.Message = err.Error()
+	} else {
+		e.Result = OK
+		e.Message = msg
+	}
+	return e
 }

@@ -56,10 +56,12 @@ func main() {
 		log.SetFlags(log.Ldate | log.Ltime)
 	}
 	h := newHub()
-	confDir := filepath.Dir(confPath)
-	moduleConfigs := filepath.Join(confDir, conf.Modules.Config)
 
-	if err := loadModuleConfs(h, moduleConfigs); err != nil {
+	confDir := filepath.Dir(confPath)
+	modConfs := filepath.Join(confDir, conf.Modules.Config)
+	modConfLoader := newModConfLoader(conf.Node, h)
+
+	if err := modConfLoader.loadAll(modConfs); err != nil {
 		log.Fatalf("failed to load module config: %s", err)
 	}
 	wg := sync.WaitGroup{}
