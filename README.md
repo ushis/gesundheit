@@ -51,7 +51,7 @@ Create some check and handler configuration files.
 # successful backup run. Lets check once every hour that the stamp has
 # been touched within the last 25 hours.
 [Check]
-Module = "mtime"
+Module = "file-mtime"
 Description = "Daily Backup"
 Interval = "1h"
 
