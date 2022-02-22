@@ -38,6 +38,23 @@ func EncodeKey(key []byte) string {
 	return base64.StdEncoding.EncodeToString(key)
 }
 
+func (priv PrivKey) Encode() string {
+	return EncodeKey(priv)
+}
+
+func (pub PubKey) Encode() string {
+	return EncodeKey(pub)
+}
+
+func GeneratePrivKey() (PrivKey, error) {
+	buf := make([]byte, chacha20poly1305.KeySize)
+
+	if _, err := rand.Read(buf); err != nil {
+		return nil, err
+	}
+	return buf, nil
+}
+
 func (priv PrivKey) PubKey() (PubKey, error) {
 	pub, err := curve25519.X25519(priv, curve25519.Basepoint)
 
