@@ -2,21 +2,10 @@ package mtime
 
 import (
 	"log"
-	"time"
 
 	"github.com/ushis/gesundheit/check"
 	filemtime "github.com/ushis/gesundheit/check/file-mtime"
 )
-
-type Check struct {
-	Path   string
-	MaxAge time.Duration
-}
-
-type Config struct {
-	Path   string
-	MaxAge string
-}
 
 func init() {
 	check.Register("mtime", New)
