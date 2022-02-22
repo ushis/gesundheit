@@ -51,7 +51,7 @@ Create some check and handler configuration files.
 # successful backup run. Lets check once every hour that the stamp has
 # been touched within the last 25 hours.
 [Check]
-Module = "mtime"
+Module = "file-mtime"
 Description = "Daily Backup"
 Interval = "1h"
 
@@ -133,6 +133,29 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>Min available space considered healthy, e.g. <code>"1G"</code></td>
     </tr>
     <tr>
+      <td rowspan="2"><strong>file-mtime</strong></td>
+      <td rowspan="2">Check mtime of a file</td>
+      <td>Path</td>
+      <td>Path to file</td>
+    </tr>
+    <tr>
+      <td>MaxAge</td>
+      <td>
+        Max age of the file considered healthy,
+        e.g. <code>"1h5m10s"</code>
+      </td>
+    </tr>
+    <tr>
+      <td rowspan="2"><strong>file-presence</strong></td>
+      <td rowspan="2">Check presence of a file</td>
+      <td>Path</td>
+      <td>Path to file, e.g. <code>"/run/reboot-required"</code></td>
+    </tr>
+    <tr>
+      <td>Present</td>
+      <td>Wether or not presence of the file is considered healthy, e.g. <code>false</code></td>
+    </tr>
+    <tr>
       <td rowspan="5"><strong>http-json</strong></td>
       <td rowspan="5">Check json value in http response</td>
       <td>Method</td>
@@ -186,19 +209,6 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>Check available memory</td>
       <td>MinAvailable</td>
       <td>Min available memory considered healthy, e.g. <code>"1G"</code></td>
-    </tr>
-    <tr>
-      <td rowspan="2"><strong>mtime</strong></td>
-      <td rowspan="2">Check mtime of a file</td>
-      <td>Path</td>
-      <td>Path to file</td>
-    </tr>
-    <tr>
-      <td>MaxAge</td>
-      <td>
-        Max age of the file considered healthy,
-        e.g. <code>"1h5m10s"</code>
-      </td>
     </tr>
   </tbody>
 </table>
