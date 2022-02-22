@@ -153,7 +153,10 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     </tr>
     <tr>
       <td>Present</td>
-      <td>Wether or not presence of the file is considered healthy, e.g. <code>false</code></td>
+      <td>
+        Whether or not presence of the file is considered healthy, e.g.
+        <code>false</code>
+      </td>
     </tr>
     <tr>
       <td rowspan="5"><strong>http-json</strong></td>
