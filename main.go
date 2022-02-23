@@ -32,7 +32,7 @@ import (
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s [<cmd>] [<args>]\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s [<subcommand>] [<args>]\n\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "Available subcommands:\n")
 	fmt.Fprintf(os.Stderr, "  serve: Runs the gesundheit service (default)\n")
 	fmt.Fprintf(os.Stderr, "    -conf <path> Path to config file\n")
@@ -41,10 +41,6 @@ func usage() {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-	log.SetOutput(os.Stdout)
-	log.SetFlags(0)
-
 	var cmd string
 	var cmdArgs []string
 
@@ -71,6 +67,7 @@ func main() {
 
 func cmdServe(args []string) {
 	var confPath string
+
 	flags := flag.NewFlagSet("", flag.ExitOnError)
 	flags.Usage = usage
 	flags.StringVar(&confPath, "conf", "/etc/gesundheit/gesundheit.toml", "config file")
@@ -80,6 +77,10 @@ func cmdServe(args []string) {
 		flags.Usage()
 		os.Exit(2)
 	}
+	rand.Seed(time.Now().UnixNano())
+	log.SetOutput(os.Stdout)
+	log.SetFlags(0)
+
 	conf, err := loadConf(confPath)
 
 	if err != nil {
