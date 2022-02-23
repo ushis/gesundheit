@@ -46,7 +46,7 @@ func New(configure func(interface{}) error) (input.Input, error) {
 	peers := []crypto.Cipher{}
 
 	for _, peerConf := range conf.Peers {
-		pubKey, err := crypto.DecodeKey(peerConf.PublicKey)
+		pubKey, err := crypto.DecodePubKey(peerConf.PublicKey)
 
 		if err != nil {
 			return nil, err

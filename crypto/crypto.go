@@ -14,7 +14,7 @@ type PrivKey []byte
 type PubKey []byte
 type Cipher cipher.AEAD
 
-func DecodeKey(b64 string) ([]byte, error) {
+func decodeKey(b64 string) ([]byte, error) {
 	key, err := base64.StdEncoding.DecodeString(b64)
 
 	if err != nil {
@@ -27,23 +27,23 @@ func DecodeKey(b64 string) ([]byte, error) {
 }
 
 func DecodePrivKey(b64 string) (PrivKey, error) {
-	return DecodeKey(b64)
+	return decodeKey(b64)
 }
 
 func DecodePubKey(b64 string) (PubKey, error) {
-	return DecodeKey(b64)
+	return decodeKey(b64)
 }
 
-func EncodeKey(key []byte) string {
+func encodeKey(key []byte) string {
 	return base64.StdEncoding.EncodeToString(key)
 }
 
 func (priv PrivKey) Encode() string {
-	return EncodeKey(priv)
+	return encodeKey(priv)
 }
 
 func (pub PubKey) Encode() string {
-	return EncodeKey(pub)
+	return encodeKey(pub)
 }
 
 func GeneratePrivKey() (PrivKey, error) {
