@@ -11,28 +11,28 @@ import (
 )
 
 type hub struct {
-	checkRunners   []*check.Runner
-	handlerRunners []*handler.Runner
-	inputRunners   []*input.Runner
+	checkRunners   []check.Runner
+	handlerRunners []handler.Runner
+	inputRunners   []input.Runner
 }
 
 func newHub() *hub {
 	return &hub{
-		checkRunners:   []*check.Runner{},
-		handlerRunners: []*handler.Runner{},
-		inputRunners:   []*input.Runner{},
+		checkRunners:   []check.Runner{},
+		handlerRunners: []handler.Runner{},
+		inputRunners:   []input.Runner{},
 	}
 }
 
-func (h *hub) registerCheckRunner(r *check.Runner) {
+func (h *hub) registerCheckRunner(r check.Runner) {
 	h.checkRunners = append(h.checkRunners, r)
 }
 
-func (h *hub) registerHandlerRunner(r *handler.Runner) {
+func (h *hub) registerHandlerRunner(r handler.Runner) {
 	h.handlerRunners = append(h.handlerRunners, r)
 }
 
-func (h *hub) registerInputRunner(r *input.Runner) {
+func (h *hub) registerInputRunner(r input.Runner) {
 	h.inputRunners = append(h.inputRunners, r)
 }
 

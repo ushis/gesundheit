@@ -16,5 +16,5 @@ func New(configure func(interface{}) error) (filter.Filter, error) {
 }
 
 func (f Filter) Filter(e check.Event) (check.Event, bool) {
-	return e, e.Result != e.CheckHistory.Last()
+	return e, e.Result != e.History.Last()
 }
