@@ -10,6 +10,7 @@ import (
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/filter"
 	"github.com/ushis/gesundheit/handler"
+	"github.com/ushis/gesundheit/input"
 	"github.com/ushis/gesundheit/node"
 )
 
@@ -31,6 +32,7 @@ type modulesConfig struct {
 type modConfig struct {
 	Check   *checkConfig
 	Handler *handlerConfig
+	Input   *inputConfig
 }
 
 type checkConfig struct {
@@ -47,6 +49,11 @@ type handlerConfig struct {
 }
 
 type filterConfig struct {
+	Module string
+	Config toml.Primitive
+}
+
+type inputConfig struct {
 	Module string
 	Config toml.Primitive
 }
@@ -110,6 +117,9 @@ func (l modConfLoader) load(path string) error {
 	}
 	if mod.Handler != nil {
 		return l.loadHandler(mod.Handler, path, meta)
+	}
+	if mod.Input != nil {
+		return l.loadInput(mod.Input, path, meta)
 	}
 	return fmt.Errorf("failed to load module config: %s: missing module configuration", path)
 }
@@ -181,4 +191,24 @@ func (l modConfLoader) loadFilter(conf *filterConfig, path string, meta toml.Met
 	return fn(func(cfg interface{}) error {
 		return meta.PrimitiveDecode(conf.Config, cfg)
 	})
+}
+
+func (l modConfLoader) loadInput(conf *inputConfig, path string, meta toml.MetaData) error {
+	fn, err := input.Get(conf.Module)
+
+	if err != nil {
+		return fmt.Errorf("failed to load input config: %s: %s", path, err.Error())
+	}
+	in, err := fn(func(cfg interface{}) error {
+		return meta.PrimitiveDecode(conf.Config, cfg)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to load input config: %s: %s", path, err.Error())
+	}
+	if len(meta.Undecoded()) > 0 {
+		return fmt.Errorf("failed to load input config: %s: unknown field %s", path, meta.Undecoded()[0])
+	}
+	l.hub.registerInputRunner(input.NewRunner(in))
+
+	return nil
 }

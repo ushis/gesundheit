@@ -14,11 +14,10 @@ type Runner struct {
 	description string
 	interval    time.Duration
 	check       Check
-	history     History
 }
 
-func NewRunner(node node.Info, description string, interval time.Duration, check Check) *Runner {
-	return &Runner{
+func NewRunner(node node.Info, description string, interval time.Duration, check Check) Runner {
+	return Runner{
 		node:        node,
 		description: description,
 		interval:    interval,
@@ -26,9 +25,18 @@ func NewRunner(node node.Info, description string, interval time.Duration, check
 	}
 }
 
-func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Event) {
-	defer wg.Done()
+func (r Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Event) error {
+	wg.Add(1)
 
+	go func() {
+		r.run(ctx, events)
+		wg.Done()
+	}()
+
+	return nil
+}
+
+func (r Runner) run(ctx context.Context, events chan<- Event) {
 	maxJitter := r.interval / 60
 	jitter := time.Duration(rand.Uint64() & uint64(2*maxJitter))
 	interval := r.interval + jitter - maxJitter
@@ -39,15 +47,17 @@ func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Even
 	case <-ctx.Done():
 		return
 	}
+	history := History(OK)
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
-		e := r.exec()
-		r.history.Append(e.Result)
+		event := r.exec(history)
+		history.Append(event.Result)
 
 		select {
-		case events <- e:
+		case events <- event:
 		case <-ctx.Done():
 			return
 		}
@@ -59,10 +69,10 @@ func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Even
 	}
 }
 
-func (r *Runner) exec() Event {
+func (r Runner) exec(history History) Event {
 	e := Event{
+		History:          history,
 		CheckDescription: r.description,
-		CheckHistory:     r.history,
 		NodeName:         r.node.Name,
 	}
 	if msg, err := r.check.Exec(); err != nil {
