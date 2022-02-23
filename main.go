@@ -16,6 +16,8 @@ import (
 	"time"
 
 	_ "github.com/ushis/gesundheit/check/disk-space"
+	_ "github.com/ushis/gesundheit/check/file-mtime"
+	_ "github.com/ushis/gesundheit/check/file-presence"
 	_ "github.com/ushis/gesundheit/check/http-json"
 	_ "github.com/ushis/gesundheit/check/http-status"
 	_ "github.com/ushis/gesundheit/check/memory"
@@ -44,41 +46,39 @@ func main() {
 	log.SetFlags(0)
 
 	var cmd string
-	var cmdArg0 string
 	var cmdArgs []string
 
 	if len(os.Args) < 2 || strings.HasPrefix(os.Args[1], "-") {
 		cmd = "serve"
-		cmdArg0 = os.Args[0]
 		cmdArgs = os.Args[1:]
 	} else {
 		cmd = os.Args[1]
-		cmdArg0 = os.Args[0]
 		cmdArgs = os.Args[2:]
 	}
 
 	switch cmd {
 	case "serve":
-		cmdServe(cmdArg0, "serve", cmdArgs)
+		cmdServe(cmdArgs)
 	case "genkey":
-		cmdGenkey(cmdArg0, "genkey", cmdArgs)
+		cmdGenkey(cmdArgs)
 	case "pubkey":
-		cmdPubkey(cmdArg0, "pubkey", cmdArgs)
+		cmdPubkey(cmdArgs)
 	default:
 		usage()
 		os.Exit(2)
 	}
 }
 
-func cmdServe(arg0, arg1 string, args []string) {
+func cmdServe(args []string) {
 	var confPath string
-	flags := flag.NewFlagSet(fmt.Sprintf("%s %s", arg0, arg1), flag.ExitOnError)
+	flags := flag.NewFlagSet("", flag.ExitOnError)
 	flags.Usage = usage
 	flags.StringVar(&confPath, "conf", "/etc/gesundheit/gesundheit.toml", "config file")
 	flags.Parse(args)
 
 	if flags.NArg() > 0 {
 		flags.Usage()
+		os.Exit(2)
 	}
 	conf, err := loadConf(confPath)
 
@@ -128,12 +128,14 @@ func openLog(path string) (io.WriteCloser, error) {
 	return os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0640)
 }
 
-func cmdGenkey(arg0, arg1 string, args []string) {
-	flags := flag.NewFlagSet(fmt.Sprintf("%s %s", arg0, arg1), flag.ExitOnError)
+func cmdGenkey(args []string) {
+	flags := flag.NewFlagSet("", flag.ExitOnError)
+	flags.Usage = usage
 	flags.Parse(args)
 
 	if flags.NArg() > 0 {
 		flags.Usage()
+		os.Exit(2)
 	}
 	priv, err := crypto.GeneratePrivKey()
 
@@ -143,12 +145,14 @@ func cmdGenkey(arg0, arg1 string, args []string) {
 	fmt.Println(priv.Encode())
 }
 
-func cmdPubkey(arg0, arg1 string, args []string) {
-	flags := flag.NewFlagSet(fmt.Sprintf("%s %s", arg0, arg1), flag.ExitOnError)
+func cmdPubkey(args []string) {
+	flags := flag.NewFlagSet("", flag.ExitOnError)
+	flags.Usage = usage
 	flags.Parse(args)
 
 	if flags.NArg() > 0 {
 		flags.Usage()
+		os.Exit(2)
 	}
 	buf, err := ioutil.ReadAll(os.Stdin)
 
