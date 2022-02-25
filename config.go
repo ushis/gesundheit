@@ -8,21 +8,35 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/db"
 	"github.com/ushis/gesundheit/filter"
 	"github.com/ushis/gesundheit/handler"
+	"github.com/ushis/gesundheit/http"
 	"github.com/ushis/gesundheit/input"
 	"github.com/ushis/gesundheit/node"
 )
 
 type config struct {
-	Node    node.Info
-	Log     logConfig
-	Modules modulesConfig
+	Node     node.Info
+	Log      logConfig
+	Http     httpConfig
+	Database databaseConfig
+	Modules  modulesConfig
 }
 
 type logConfig struct {
 	Path       string
 	Timestamps bool
+}
+
+type httpConfig struct {
+	Enabled bool
+	Config  toml.Primitive
+}
+
+type databaseConfig struct {
+	Module string
+	Config toml.Primitive
 }
 
 type modulesConfig struct {
@@ -58,28 +72,52 @@ type inputConfig struct {
 	Config toml.Primitive
 }
 
-func loadConf(path string) (config, error) {
+func loadConf(path string) (config, db.Database, *http.Server, error) {
 	conf := config{
-		Log:     logConfig{Path: "-", Timestamps: false},
-		Modules: modulesConfig{Config: "modules.d"},
+		Log:      logConfig{Path: "-", Timestamps: false},
+		Http:     httpConfig{Enabled: false},
+		Database: databaseConfig{Module: "memory"},
+		Modules:  modulesConfig{Config: "modules.d/*.toml"},
 	}
 	meta, err := toml.DecodeFile(path, &conf)
 
 	if err != nil {
-		return conf, err
+		return conf, nil, nil, err
+	}
+	dbFunc, err := db.Get(conf.Database.Module)
+
+	if err != nil {
+		return conf, nil, nil, fmt.Errorf("failed to load database config: %s: %s", path, err)
+	}
+	db, err := dbFunc(func(cfg interface{}) error {
+		return meta.PrimitiveDecode(conf.Database.Config, cfg)
+	})
+
+	if err != nil {
+		return conf, nil, nil, fmt.Errorf("failed to load database config: %s: %s", path, err)
+	}
+	http, err := http.New(db, func(cfg interface{}) error {
+		return meta.PrimitiveDecode(conf.Http.Config, cfg)
+	})
+
+	if err != nil {
+		return conf, nil, nil, fmt.Errorf("failed to load http config: %s: %s", path, err)
+	}
+	if !conf.Http.Enabled {
+		http = nil
 	}
 	if len(meta.Undecoded()) > 0 {
-		return conf, fmt.Errorf("failed to load config: %s: unknown field %s", path, meta.Undecoded()[0])
+		return conf, nil, nil, fmt.Errorf("failed to load config: %s: unknown field %s", path, meta.Undecoded()[0])
 	}
 	if conf.Node.Name == "" {
 		hostname, err := os.Hostname()
 
 		if err != nil {
-			return conf, fmt.Errorf("failed to determine hostname: %s", err)
+			return conf, nil, nil, fmt.Errorf("failed to determine hostname: %s", err)
 		}
 		conf.Node.Name = hostname
 	}
-	return conf, nil
+	return conf, db, http, nil
 }
 
 type modConfLoader struct {
@@ -147,7 +185,7 @@ func (l modConfLoader) loadCheck(conf *checkConfig, path string, meta toml.MetaD
 	if err != nil {
 		return fmt.Errorf("failed to load check config: %s: %s", path, err.Error())
 	}
-	l.hub.registerCheckRunner(check.NewRunner(l.node, conf.Description, interval, chk))
+	l.hub.registerCheckRunner(check.NewRunner(l.node, filepath.Base(path), conf.Description, interval, chk))
 
 	return nil
 }

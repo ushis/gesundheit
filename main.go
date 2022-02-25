@@ -23,6 +23,7 @@ import (
 	_ "github.com/ushis/gesundheit/check/memory"
 	_ "github.com/ushis/gesundheit/check/mtime"
 	"github.com/ushis/gesundheit/crypto"
+	_ "github.com/ushis/gesundheit/db/memory"
 	_ "github.com/ushis/gesundheit/filter/office-hours"
 	_ "github.com/ushis/gesundheit/filter/result-change"
 	_ "github.com/ushis/gesundheit/handler/gotify"
@@ -81,7 +82,7 @@ func cmdServe(args []string) {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
 
-	conf, err := loadConf(confPath)
+	conf, db, http, err := loadConf(confPath)
 
 	if err != nil {
 		log.Fatalln("failed to load config:", err)
@@ -98,7 +99,8 @@ func cmdServe(args []string) {
 	if conf.Log.Timestamps {
 		log.SetFlags(log.Ldate | log.Ltime)
 	}
-	h := newHub()
+	h := &hub{}
+	h.registerHandlerRunner(db)
 
 	confDir := filepath.Dir(confPath)
 	modConfs := filepath.Join(confDir, conf.Modules.Config)
@@ -108,7 +110,18 @@ func cmdServe(args []string) {
 		log.Fatalln("failed to load module config:", err)
 	}
 	ctx, stop := context.WithCancel(context.Background())
-	done, err := h.run(ctx)
+
+	var httpDone <-chan struct{}
+
+	if http != nil {
+		httpDone, err = http.Run(ctx)
+
+		if err != nil {
+			log.Fatalln("failed to run http:", err)
+		}
+		h.registerHandlerRunner(http)
+	}
+	hubDone, err := h.run(ctx)
 
 	if err != nil {
 		log.Fatalln("failed to start:", err)
@@ -119,7 +132,11 @@ func cmdServe(args []string) {
 	<-sig
 
 	stop()
-	<-done
+
+	if httpDone != nil {
+		<-httpDone
+	}
+	<-hubDone
 }
 
 func openLog(path string) (io.WriteCloser, error) {
