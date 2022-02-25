@@ -42,11 +42,11 @@ withDefaults(defineProps<{
 
 .dot.dot-pulse {
   animation-name: dot-pulse;
-	animation-duration: 2s;
-	animation-timing-function: ease-in-out;
-	animation-iteration-count: infinite;
-	animation-direction: normal;
-	animation-fill-mode: none;
+  animation-duration: 2s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: normal;
+  animation-fill-mode: none;
 }
 
 .dot.dot-pulse.dot-danger {
