@@ -117,7 +117,7 @@ func cmdServe(args []string) {
 
 	ctx, stop := context.WithCancel(context.Background())
 
-	s := http.NewServer(db, ":8080")
+	s := http.NewServer(db, conf.Http.Listen)
 	h.registerHandlerRunner(handler.NewRunner(s, nil))
 
 	httpDone, _ := s.Run(ctx)

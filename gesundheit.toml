@@ -1,8 +1,7 @@
-# Log to stdout without timestamps
-[Log]
-Path = "-"
-Timestamps = false
+# Dev config. See pkg/gesundheit.toml for reasonable production settings.
+[Http]
+Enabled = true
+Listen = ":8080"
 
-# Load modules config from modules.d
-[Modules]
-Config = "modules.d/*.toml"
+[Log]
+Timestamps = true

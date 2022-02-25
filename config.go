@@ -15,14 +15,26 @@ import (
 )
 
 type config struct {
-	Node    node.Info
-	Log     logConfig
-	Modules modulesConfig
+	Node     node.Info
+	Log      logConfig
+	Http     httpConfig
+	Database databaseConfig
+	Modules  modulesConfig
 }
 
 type logConfig struct {
 	Path       string
 	Timestamps bool
+}
+
+type httpConfig struct {
+	Enabled bool
+	Listen  string
+}
+
+type databaseConfig struct {
+	Module string
+	Config toml.Primitive
 }
 
 type modulesConfig struct {
@@ -60,8 +72,10 @@ type inputConfig struct {
 
 func loadConf(path string) (config, error) {
 	conf := config{
-		Log:     logConfig{Path: "-", Timestamps: false},
-		Modules: modulesConfig{Config: "modules.d"},
+		Log:      logConfig{Path: "-", Timestamps: false},
+		Http:     httpConfig{Enabled: false, Listen: "127.0.0.1:8080"},
+		Database: databaseConfig{Module: "memory"},
+		Modules:  modulesConfig{Config: "modules.d/*.toml"},
 	}
 	meta, err := toml.DecodeFile(path, &conf)
 
