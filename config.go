@@ -147,7 +147,7 @@ func (l modConfLoader) loadCheck(conf *checkConfig, path string, meta toml.MetaD
 	if err != nil {
 		return fmt.Errorf("failed to load check config: %s: %s", path, err.Error())
 	}
-	l.hub.registerCheckRunner(check.NewRunner(l.node, conf.Description, interval, chk))
+	l.hub.registerCheckRunner(check.NewRunner(l.node, filepath.Base(path), conf.Description, interval, chk))
 
 	return nil
 }

@@ -11,14 +11,16 @@ import (
 
 type Runner struct {
 	node        node.Info
+	id          string
 	description string
 	interval    time.Duration
 	check       Check
 }
 
-func NewRunner(node node.Info, description string, interval time.Duration, check Check) Runner {
+func NewRunner(node node.Info, id, description string, interval time.Duration, check Check) Runner {
 	return Runner{
 		node:        node,
+		id:          id,
 		description: description,
 		interval:    interval,
 		check:       check,
@@ -71,9 +73,11 @@ func (r Runner) run(ctx context.Context, events chan<- Event) {
 
 func (r Runner) exec(history History) Event {
 	e := Event{
-		History:          history,
-		CheckDescription: r.description,
 		NodeName:         r.node.Name,
+		CheckId:          r.id,
+		CheckDescription: r.description,
+		History:          history,
+		Timestamp:        time.Now(),
 	}
 	if msg, err := r.check.Exec(); err != nil {
 		e.Result = CRITICAL

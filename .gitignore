@@ -1,2 +1,4 @@
 /modules.d
 /gesundheit
+/node_modules
+/http/ui/dist

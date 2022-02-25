@@ -23,11 +23,15 @@ import (
 	_ "github.com/ushis/gesundheit/check/memory"
 	_ "github.com/ushis/gesundheit/check/mtime"
 	"github.com/ushis/gesundheit/crypto"
+	"github.com/ushis/gesundheit/db"
+	_ "github.com/ushis/gesundheit/db/memory"
 	_ "github.com/ushis/gesundheit/filter/office-hours"
 	_ "github.com/ushis/gesundheit/filter/result-change"
+	"github.com/ushis/gesundheit/handler"
 	_ "github.com/ushis/gesundheit/handler/gotify"
 	_ "github.com/ushis/gesundheit/handler/log"
 	_ "github.com/ushis/gesundheit/handler/remote"
+	"github.com/ushis/gesundheit/http"
 	_ "github.com/ushis/gesundheit/input/remote"
 )
 
@@ -107,7 +111,17 @@ func cmdServe(args []string) {
 	if err := modConfLoader.loadAll(modConfs); err != nil {
 		log.Fatalln("failed to load module config:", err)
 	}
+	dbFunc, _ := db.Get("memory")
+	db, _ := dbFunc(func(_ interface{}) error { return nil })
+	h.registerHandlerRunner(handler.NewRunner(db, nil))
+
 	ctx, stop := context.WithCancel(context.Background())
+
+	s := http.NewServer(db, ":8080")
+	h.registerHandlerRunner(handler.NewRunner(s, nil))
+
+	httpDone, _ := s.Run(ctx)
+
 	done, err := h.run(ctx)
 
 	if err != nil {
@@ -119,6 +133,7 @@ func cmdServe(args []string) {
 	<-sig
 
 	stop()
+	<-httpDone
 	<-done
 }
 
