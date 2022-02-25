@@ -13,7 +13,6 @@ withDefaults(defineProps<{
 </template>
 
 <style scoped lang="scss">
-@use 'sass:color';
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/_variables.scss';
 
