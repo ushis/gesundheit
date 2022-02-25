@@ -1,7 +1,6 @@
 # Dev config. See pkg/gesundheit.toml for reasonable production settings.
 [Http]
 Enabled = true
-Listen = ":8080"
 
-[Log]
-Timestamps = true
+[Http.Config]
+Listen = ":8080"

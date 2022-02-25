@@ -12,28 +12,20 @@ import (
 
 type hub struct {
 	checkRunners   []check.Runner
-	handlerRunners []handler.Runner
 	inputRunners   []input.Runner
-}
-
-func newHub() *hub {
-	return &hub{
-		checkRunners:   []check.Runner{},
-		handlerRunners: []handler.Runner{},
-		inputRunners:   []input.Runner{},
-	}
+	handlerRunners []handler.Handler
 }
 
 func (h *hub) registerCheckRunner(r check.Runner) {
 	h.checkRunners = append(h.checkRunners, r)
 }
 
-func (h *hub) registerHandlerRunner(r handler.Runner) {
-	h.handlerRunners = append(h.handlerRunners, r)
-}
-
 func (h *hub) registerInputRunner(r input.Runner) {
 	h.inputRunners = append(h.inputRunners, r)
+}
+
+func (h *hub) registerHandlerRunner(r handler.Handler) {
+	h.handlerRunners = append(h.handlerRunners, r)
 }
 
 func (h *hub) run(ctx context.Context) (<-chan struct{}, error) {

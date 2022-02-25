@@ -28,17 +28,26 @@ func init() {
 }
 
 type Server struct {
-	addr    string
+	Listen  string
 	db      db.Database
 	sockets *sockPool
 }
 
-func NewServer(db db.Database, addr string) *Server {
-	return &Server{addr: addr, db: db, sockets: newSockPool()}
+type Config struct {
+	Listen string
+}
+
+func New(db db.Database, configure func(interface{}) error) (*Server, error) {
+	conf := Config{Listen: "127.0.0.1:8080"}
+
+	if err := configure(&conf); err != nil {
+		return nil, err
+	}
+	return &Server{Listen: conf.Listen, db: db, sockets: newSockPool()}, nil
 }
 
 func (s *Server) Run(ctx context.Context) (<-chan struct{}, error) {
-	l, err := net.Listen("tcp", s.addr)
+	l, err := net.Listen("tcp", s.Listen)
 
 	if err != nil {
 		return nil, err
