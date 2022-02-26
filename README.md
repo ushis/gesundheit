@@ -16,11 +16,16 @@ Other Linux users can download binaries from the
 
 #### From Source
 
-You will need a [Go compiler](https://go.dev/), if you want to install gesundheit
-from source. Once you have got one, it is as easy as:
+You will need a [Go compiler](https://go.dev/), [Node.js](https://nodejs.org/)
+and the [Yarn Package Manager](https://yarnpkg.com/), if you want to install
+gesundheit from source. Once you have got that, it is as easy as:
 
 ```
-go install github.com/ushis/gesundheit@latest
+git clone https://github.com/ushis/gesundheit.git
+cd gesundheit
+yarn install
+yarn build
+go build
 ```
 
 ## Usage
