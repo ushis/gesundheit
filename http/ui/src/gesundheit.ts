@@ -1,4 +1,4 @@
-export interface Event {
+export interface EventData {
   NodeName: string,
   CheckId: string,
   CheckDescription: string,
@@ -12,9 +12,9 @@ export class EventStream {
   static SOCKET_ENDPOINT = `ws://${location.host}/api/events/socket`;
 
   private ws: WebSocket | null;
-  private handler: (event: Event) => void;
+  private handler: (event: EventData) => void;
 
-  constructor(handler: (event: Event) => void) {
+  constructor(handler: (event: EventData) => void) {
     this.ws = null;
     this.handler = handler;
   }
@@ -38,7 +38,7 @@ export class EventStream {
   private async fetchEvents() {
     const response = await fetch(EventStream.EVENTS_ENDPOINT);
     const events = await response.json();
-    events.forEach((event: Event) => this.handler(event));
+    events.forEach((event: EventData) => this.handler(event));
   }
 
   private reconnect(): void {

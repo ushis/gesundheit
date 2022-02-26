@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Event } from '../gesundheit'
-import EventComponent from './Event.vue';
+import { EventData } from '../gesundheit'
+import Event from './Event.vue';
 import Dot from './Dot.vue';
 
 const props = defineProps<{
   name: string,
-  events: Array<Event>,
+  events: Array<EventData>,
 }>()
 
 const healthy = computed(() => (
@@ -34,7 +34,7 @@ const sortedEvents = computed(() => (
     </div>
 
     <div class="card-body">
-      <EventComponent
+      <Event
         v-for="event in sortedEvents"
         :key="event.CheckId"
         :event="event"

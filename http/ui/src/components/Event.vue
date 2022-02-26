@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { Event } from '../gesundheit'
+import { EventData } from '../gesundheit'
 import Dot from './Dot.vue';
 import TimeAgo from './TimeAgo.vue';
 
-const props = defineProps<{ event: Event }>();
+const props = defineProps<{ event: EventData }>();
 const healthy = computed(() => props.event.Result === 0);
 const isOpen = ref(!healthy.value);
 
@@ -27,9 +27,10 @@ watch(healthy, (healthy) => {
       <div class="me-auto">
         {{ event.CheckDescription }}
       </div>
-      <div class="text-truncate d-none d-sm-block">
-        <TimeAgo :timestamp="event.Timestamp" />
-      </div>
+      <TimeAgo
+        :timestamp="event.Timestamp"
+        class="text-truncate d-none d-sm-block"
+      />
     </div>
     <div
       class="card-body"

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeMount } from 'vue'
-import { Event, EventStream } from './gesundheit';
+import { EventData, EventStream } from './gesundheit';
 import Dot from './components/Dot.vue';
 import Node from './components/Node.vue';
 
-const nodes = ref(new Map() as Map<string, Array<Event>>);
+const nodes = ref(new Map() as Map<string, Array<EventData>>);
 
 const sortedNodes = computed(() => (
   Array.from(nodes.value.entries())
