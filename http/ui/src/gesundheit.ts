@@ -9,7 +9,7 @@ export interface EventData {
 
 export class EventStream {
   static EVENTS_ENDPOINT = '/api/events';
-  static SOCKET_ENDPOINT = `ws://${location.host}/api/events/socket`;
+  static SOCKET_ENDPOINT = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/events/socket`;
 
   private ws: WebSocket | null;
   private pingInterval: number | null;
