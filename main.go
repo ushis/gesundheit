@@ -100,7 +100,7 @@ func cmdServe(args []string) {
 		log.SetFlags(log.Ldate | log.Ltime)
 	}
 	h := &hub{}
-	h.registerHandlerRunner(db)
+	h.registerHandler(db)
 
 	confDir := filepath.Dir(confPath)
 	modConfs := filepath.Join(confDir, conf.Modules.Config)
@@ -119,7 +119,7 @@ func cmdServe(args []string) {
 		if err != nil {
 			log.Fatalln("failed to run http:", err)
 		}
-		h.registerHandlerRunner(http)
+		h.registerHandler(http)
 	}
 	hubDone, err := h.run(ctx)
 
