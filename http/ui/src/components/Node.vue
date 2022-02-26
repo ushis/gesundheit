@@ -24,9 +24,13 @@ const sortedEvents = computed(() => (
 
 <template>
   <div  class="card">
-    <div class="card-header">
-      <Dot :pulse="!healthy" :danger="!healthy" class="me-3" />
-      <span>{{ name }}</span>
+    <div class="card-header d-flex align-items-center">
+      <Dot
+        :pulse="!healthy"
+        :danger="!healthy"
+        class="flex-shrink-0 me-3"
+      />
+      <div>{{ name }}</div>
     </div>
 
     <div class="card-body">
