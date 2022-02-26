@@ -14,7 +14,7 @@ const healthy = computed(() => (
 ));
 
 const sortedEvents = computed(() => (
-  props.events.sort((a, b) => {
+  [...props.events].sort((a, b) => {
     if (a.Result < b.Result) return 1;
     if (a.Result > b.Result) return -1;
     return b.Timestamp.localeCompare(a.Timestamp);
@@ -23,7 +23,7 @@ const sortedEvents = computed(() => (
 </script>
 
 <template>
-  <div  class="card">
+  <div class="card">
     <div class="card-header d-flex align-items-center">
       <Dot
         :pulse="!healthy"

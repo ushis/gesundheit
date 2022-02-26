@@ -9,7 +9,10 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <span class="dot" :class="{ 'dot-pulse': pulse, 'dot-danger': danger }" />
+  <span
+    class="dot"
+    :class="{ 'dot-pulse': pulse, 'dot-danger': danger }"
+  />
 </template>
 
 <style scoped lang="scss">
