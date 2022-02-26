@@ -39,8 +39,6 @@ Timestamps = false
 # We love pretty dashboards. Therefore we will enable the web interface.
 [Http]
 Enabled = true
-
-[Http.Config]
 Listen = "127.0.0.1:8080"
 
 # The configuration files for our modules live in

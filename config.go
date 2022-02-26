@@ -31,7 +31,7 @@ type logConfig struct {
 
 type httpConfig struct {
 	Enabled bool
-	Config  toml.Primitive
+	Listen  string
 }
 
 type databaseConfig struct {
@@ -75,7 +75,7 @@ type inputConfig struct {
 func loadConf(path string) (config, db.Database, *http.Server, error) {
 	conf := config{
 		Log:      logConfig{Path: "-", Timestamps: false},
-		Http:     httpConfig{Enabled: false},
+		Http:     httpConfig{Enabled: false, Listen: "127.0.0.1:8080"},
 		Database: databaseConfig{Module: "memory"},
 		Modules:  modulesConfig{Config: "modules.d/*.toml"},
 	}
@@ -96,15 +96,10 @@ func loadConf(path string) (config, db.Database, *http.Server, error) {
 	if err != nil {
 		return conf, nil, nil, fmt.Errorf("failed to load database config: %s: %s", path, err)
 	}
-	http, err := http.New(db, func(cfg interface{}) error {
-		return meta.PrimitiveDecode(conf.Http.Config, cfg)
-	})
+	var httpServer *http.Server
 
-	if err != nil {
-		return conf, nil, nil, fmt.Errorf("failed to load http config: %s: %s", path, err)
-	}
-	if !conf.Http.Enabled {
-		http = nil
+	if conf.Http.Enabled {
+		httpServer = http.New(conf.Http.Listen, db)
 	}
 	if len(meta.Undecoded()) > 0 {
 		return conf, nil, nil, fmt.Errorf("failed to load config: %s: unknown field %s", path, meta.Undecoded()[0])
@@ -117,7 +112,7 @@ func loadConf(path string) (config, db.Database, *http.Server, error) {
 		}
 		conf.Node.Name = hostname
 	}
-	return conf, db, http, nil
+	return conf, db, httpServer, nil
 }
 
 type modConfLoader struct {

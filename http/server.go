@@ -38,13 +38,8 @@ type Config struct {
 	Listen string
 }
 
-func New(db db.Database, configure func(interface{}) error) (*Server, error) {
-	conf := Config{Listen: "127.0.0.1:8080"}
-
-	if err := configure(&conf); err != nil {
-		return nil, err
-	}
-	return &Server{Listen: conf.Listen, db: db, sockets: newSockPool()}, nil
+func New(listen string, db db.Database) *Server {
+	return &Server{Listen: listen, db: db, sockets: newSockPool()}
 }
 
 func (s *Server) Run(ctx context.Context, wg *sync.WaitGroup) error {

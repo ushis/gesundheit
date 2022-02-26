@@ -6,8 +6,6 @@ Timestamps = false
 # Enable if you need a pretty web interface
 [Http]
 Enabled = false
-
-[Http.Config]
 Listen = "127.0.0.1:8080"
 
 # Load modules config from modules.d

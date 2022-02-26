@@ -1,6 +1,4 @@
 # Dev config. See pkg/gesundheit.toml for reasonable production settings.
 [Http]
 Enabled = true
-
-[Http.Config]
 Listen = ":8080"
