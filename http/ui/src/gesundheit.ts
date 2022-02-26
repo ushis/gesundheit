@@ -12,27 +12,31 @@ export class EventStream {
   static SOCKET_ENDPOINT = `ws://${location.host}/api/events/socket`;
 
   private ws: WebSocket | null;
+  private pingInterval: number | null;
   private handler: (event: EventData) => void;
 
   constructor(handler: (event: EventData) => void) {
     this.ws = null;
+    this.pingInterval = null;
     this.handler = handler;
   }
 
   connect(): void {
-    if (this.isOpen()) return;
+    if (this.isConnecting || this.isOpen) return;
 
     this.ws = new WebSocket(EventStream.SOCKET_ENDPOINT);
     this.ws.addEventListener('close', () => this.reconnect());
     this.ws.addEventListener('error', () => this.reconnect());
     this.ws.addEventListener('message', (e) => this.handleMessage(e.data));
 
-    setInterval(() => this.ping(), 25_000);
+    if (this.pingInterval === null) {
+      this.pingInterval = setInterval(() => this.ping(), 25_000);
+    }
     this.fetchEvents();
   }
 
   private ping() {
-    if (this.isOpen()) this.ws?.send('🤓 ping 🤓');
+    if (this.isOpen) this.ws?.send('🤓 ping 🤓');
   }
 
   private async fetchEvents() {
@@ -46,9 +50,12 @@ export class EventStream {
     setTimeout(() => this.connect(), 1_000);
   }
 
-  private isOpen(): boolean {
-    return this.ws?.readyState === WebSocket.CONNECTING ||
-      this.ws?.readyState === WebSocket.OPEN;
+  private get isConnecting(): boolean {
+    return this.ws?.readyState === WebSocket.CONNECTING
+  }
+
+  private get isOpen(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
   }
 
   private handleMessage(data: string): void {
