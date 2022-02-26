@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/db"
@@ -46,26 +47,27 @@ func New(db db.Database, configure func(interface{}) error) (*Server, error) {
 	return &Server{Listen: conf.Listen, db: db, sockets: newSockPool()}, nil
 }
 
-func (s *Server) Run(ctx context.Context) (<-chan struct{}, error) {
+func (s *Server) Run(ctx context.Context, wg *sync.WaitGroup) error {
 	l, err := net.Listen("tcp", s.Listen)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
-	done := make(chan struct{})
+	wg.Add(2)
 
 	go func() {
 		s.run(l)
 		s.sockets.closeAll()
-		close(done)
+		wg.Done()
 	}()
 
 	go func() {
 		<-ctx.Done()
 		l.Close()
+		wg.Done()
 	}()
 
-	return done, nil
+	return nil
 }
 
 func (s *Server) Handle(e check.Event) error {

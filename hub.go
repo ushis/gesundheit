@@ -11,9 +11,9 @@ import (
 )
 
 type hub struct {
-	checkRunners   []check.Runner
-	inputRunners   []input.Runner
-	handlerRunners []handler.Handler
+	checkRunners []check.Runner
+	inputRunners []input.Runner
+	handlers     []handler.Handler
 }
 
 func (h *hub) registerCheckRunner(r check.Runner) {
@@ -24,37 +24,38 @@ func (h *hub) registerInputRunner(r input.Runner) {
 	h.inputRunners = append(h.inputRunners, r)
 }
 
-func (h *hub) registerHandlerRunner(r handler.Handler) {
-	h.handlerRunners = append(h.handlerRunners, r)
+func (h *hub) registerHandler(r handler.Handler) {
+	h.handlers = append(h.handlers, r)
 }
 
-func (h *hub) run(ctx context.Context) (<-chan struct{}, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	wg := sync.WaitGroup{}
+func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
+	ctx, cancelRunners := context.WithCancel(ctx)
+	runnersWg := sync.WaitGroup{}
 	events := make(chan check.Event)
 
-	if err := h.runRunners(ctx, &wg, events); err != nil {
-		cancel()
-		wg.Wait()
-		return nil, err
+	if err := h.runRunners(ctx, &runnersWg, events); err != nil {
+		cancelRunners()
+		runnersWg.Wait()
+		return err
 	}
-	done := make(chan struct{})
+	wg.Add(2)
 
 	go func() {
 		for e := range events {
 			h.dispatch(e)
 		}
-		close(done)
+		wg.Done()
 	}()
 
 	go func() {
 		<-ctx.Done()
-		cancel()
-		wg.Wait()
+		cancelRunners()
+		runnersWg.Wait()
 		close(events)
+		wg.Done()
 	}()
 
-	return done, nil
+	return nil
 }
 
 func (h *hub) runRunners(ctx context.Context, wg *sync.WaitGroup, events chan<- check.Event) error {
@@ -72,7 +73,7 @@ func (h *hub) runRunners(ctx context.Context, wg *sync.WaitGroup, events chan<- 
 }
 
 func (h *hub) dispatch(e check.Event) {
-	for _, r := range h.handlerRunners {
+	for _, r := range h.handlers {
 		if err := r.Handle(e); err != nil {
 			log.Println(err)
 		}

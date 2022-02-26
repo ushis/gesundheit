@@ -12,7 +12,7 @@ const sortedNodes = computed(() => (
 ));
 
 const healthy = computed(() => (
-  sortedNodes.value.every(([_, events]) => (
+  sortedNodes.value.every(([, events]) => (
     events.every((event) => event.Result === 0)
   ))
 ));
@@ -36,7 +36,11 @@ onBeforeMount(() => stream.connect());
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
       <div class="navbar-brand">
-        <Dot :danger="!healthy" :pulse="!healthy" class="me-3" />
+        <Dot
+          :danger="!healthy"
+          :pulse="!healthy"
+          class="me-3"
+        />
         <span>gesundheit</span>
       </div>
     </div>

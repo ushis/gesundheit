@@ -15,16 +15,26 @@ watch(healthy, (healthy) => {
 
 <template>
   <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between" @click="isOpen = !isOpen">
-      <div class="text-nowrap me-5">
-        <Dot :pulse="!healthy" :danger="!healthy" class="me-3" />
-        <span>{{ event.CheckDescription }}</span>
+    <div
+      class="card-header d-flex align-items-center"
+      @click="isOpen = !isOpen"
+    >
+      <Dot
+        :pulse="!healthy"
+        :danger="!healthy"
+        class="flex-shrink-0 me-3"
+      />
+      <div class="me-auto">
+        {{ event.CheckDescription }}
       </div>
-      <div class="text-truncate">
+      <div class="text-truncate d-none d-sm-block">
         <TimeAgo :timestamp="event.Timestamp" />
       </div>
     </div>
-    <div class="card-body" :class="{ 'd-none': !isOpen }">
+    <div
+      class="card-body"
+      :class="{ 'd-none': !isOpen }"
+    >
       <code class="text-dark">{{ event.Message }}</code>
     </div>
   </div>

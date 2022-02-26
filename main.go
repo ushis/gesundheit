@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -100,7 +101,7 @@ func cmdServe(args []string) {
 		log.SetFlags(log.Ldate | log.Ltime)
 	}
 	h := &hub{}
-	h.registerHandlerRunner(db)
+	h.registerHandler(db)
 
 	confDir := filepath.Dir(confPath)
 	modConfs := filepath.Join(confDir, conf.Modules.Config)
@@ -109,21 +110,17 @@ func cmdServe(args []string) {
 	if err := modConfLoader.loadAll(modConfs); err != nil {
 		log.Fatalln("failed to load module config:", err)
 	}
+	wg := sync.WaitGroup{}
 	ctx, stop := context.WithCancel(context.Background())
 
-	var httpDone <-chan struct{}
-
 	if http != nil {
-		httpDone, err = http.Run(ctx)
-
-		if err != nil {
+		if err := http.Run(ctx, &wg); err != nil {
 			log.Fatalln("failed to run http:", err)
 		}
-		h.registerHandlerRunner(http)
+		h.registerHandler(http)
 	}
-	hubDone, err := h.run(ctx)
 
-	if err != nil {
+	if err := h.run(ctx, &wg); err != nil {
 		log.Fatalln("failed to start:", err)
 	}
 
@@ -132,11 +129,7 @@ func cmdServe(args []string) {
 	<-sig
 
 	stop()
-
-	if httpDone != nil {
-		<-httpDone
-	}
-	<-hubDone
+	wg.Wait()
 }
 
 func openLog(path string) (io.WriteCloser, error) {

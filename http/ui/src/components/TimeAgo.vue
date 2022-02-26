@@ -11,11 +11,11 @@ const formattedTimestamp = ref<string>();
 
 function formatTimestamp(timestamp: string): string {
   return timeAgo.format(new Date(timestamp), 'round-minute') as string
-};
+}
 
 function updateformattedTimestamp(): void {
   formattedTimestamp.value = formatTimestamp(props.timestamp);
-};
+}
 
 watch(props, updateformattedTimestamp, { immediate: true });
 

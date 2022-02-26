@@ -25,7 +25,9 @@ jobs:
           go-version: ">=1.17.7"
       - run: |
           yarn install
+          yarn lint
           yarn build
+      - run: |
           go build -v -a -o gesundheit .
       - uses: actions/upload-artifact@v2
         with:
