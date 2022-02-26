@@ -36,6 +36,13 @@ Create a configuration file (e.g. `/etc/gesundheit/gesundheit.toml`).
 Path = "-"
 Timestamps = false
 
+# We love pretty dashboards. Therefore we will enable the web interface.
+[Http]
+Enabled = true
+
+[Http.Config]
+Listen = "127.0.0.1:8080"
+
 # The configuration files for our modules live in
 # /etc/gesundheit/modules.d/*.toml
 [Modules]
@@ -230,13 +237,6 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
   </thead>
   <tbody>
     <tr>
-      <td><strong>log</strong></td>
-      <td>Log check results</td>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
       <td rowspan="3"><strong>gotify</strong></td>
       <td rowspan="3">Send check results to gotify</td>
       <td>Url</td>
@@ -252,6 +252,36 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>Priority</td>
       <td>Priority of every gotify message</td>
       <td><code>4</code></td>
+    </tr>
+    <tr>
+      <td><strong>log</strong></td>
+      <td>Log check results</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowspan="3"><strong>remote</strong></td>
+      <td rowspan="3">Send check results to a remote gesundheit service</td>
+      <td>Address</td>
+      <td>Address of the remote service, e.g. <code>"gesundheit.example.org:9999"</code></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>PrivateKey</td>
+      <td>
+        Private key of the local service, generated
+        with <code>gesundheit genkey</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>PublicKey</td>
+      <td>
+        Public key of the remote gesundheit service,
+        generated with <code>gesundheit pubkey</code>
+      </td>
+      <td></td>
     </tr>
   </tbody>
 </table>
@@ -276,11 +306,46 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     </tr>
     <tr>
       <td><strong>office-hours</strong></td>
-      <td>Filter events inside given time spans</td>
+      <td>Filter check results inside given time spans</td>
       <td>Hours</td>
       <td>
         List of time spans, e.g.<br/>
         <code>[{From = "9:00", To = "17:00"}]</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+### Inputs
+
+<table>
+  <thead>
+    <tr>
+      <th>Module</th>
+      <th>Description</th>
+      <th>Config</th>
+      <th>Config Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>remote</strong></td>
+      <td rowspan="3">Receive check results from a remote gesundheit service</td>
+      <td>Listen</td>
+      <td>Address to listen on, e.g. <code>"0.0.0.0:9999"</code></td>
+    </tr>
+    <tr>
+      <td>PrivateKey</td>
+      <td>
+        Private key of the local service, generated
+        with <code>gesundheit genkey</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Peers</td>
+      <td>
+        List of peers, e.g. <code>[{ PublicKey = "xxx" }]</code>
       </td>
     </tr>
   </tbody>
