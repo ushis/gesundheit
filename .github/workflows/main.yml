@@ -137,6 +137,7 @@ jobs:
       - run: |
           sed -i "s#Architecture:#Architecture: ${{ matrix.arch }}#g" src/pkg/deb/control
           sed -i "s#Version:#Version: ${GITHUB_REF_NAME}#g" src/pkg/deb/control
+          sudo install -Dm644 src/pkg/deb/conffiles       gesundheit/DEBIAN/conffiles
           sudo install -Dm644 src/pkg/deb/control         gesundheit/DEBIAN/control
           sudo install -Dm755 src/pkg/deb/postinst        gesundheit/DEBIAN/postinst
           sudo install -Dm755 bin/gesundheit              gesundheit/usr/bin/gesundheit
