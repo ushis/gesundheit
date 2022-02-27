@@ -104,13 +104,13 @@ jobs:
           sed -i "s/pkgver=/pkgver=${GITHUB_REF_NAME}/g" PKGBUILD
           su build -c "makepkg --sign --skipchecksums"
           su build -c "repo-add gesundheit.db.tar.gz gesundheit-*.pkg.tar.zst"
-      - uses: actions/upload-artifact@v2
-        with:
-          name: arch-${{ matrix.arch }}
-          path: |
-            build/gesundheit-*.pkg.*
-            build/gesundheit.db*
-            build/gesundheit.files*
+      - run: |
+          cd build
+          for f in gesundheit-*.pkg.* gesundheit.db* gesundheit.files*; do
+            curl -f -X PUT -u "${DAV_CREDENTIALS}" "https://dav.honkgong.info/repo/gesundheit/arch/${{ matrix.arch }}/${f}" -T "${f}"
+          done
+        env:
+          DAV_CREDENTIALS: ${{ secrets.DAV_CREDENTIALS }}
 
   deb:
     if: startsWith(github.ref, 'refs/tags/')
@@ -178,47 +178,9 @@ jobs:
           apt-ftparchive release . > Release
           gpg --digest-algo SHA256 --armor --output Release.gpg --detach-sign Release
           gpg --digest-algo SHA256 --clearsign --output InRelease Release
-      - uses: actions/upload-artifact@v2
-        with:
-          name: deb-repo
-          path: |
-            *.deb
-            Packages*
-            Release*
-            InRelease
-
-  pages:
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [arch, deb-repo]
-    runs-on: "ubuntu-latest"
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: arch-x86_64
-          path: pkg/arch/x86_64
-      - uses: actions/download-artifact@v2
-        with:
-          name: arch-armv7h
-          path: pkg/arch/armv7h
-      - uses: actions/download-artifact@v2
-        with:
-          name: arch-aarch64
-          path: pkg/arch/aarch64
-      - uses: actions/download-artifact@v2
-        with:
-          name: deb-repo
-          path: pkg/deb
-      - uses: "actions/checkout@v2"
-        with:
-          ref: gh-pages
-          path: pages
       - run: |
-          rm -rf pages/{arch,deb}
-          mv pkg/{arch,deb} pages
-          cd pages
-          (for f in $(find arch deb -type f | sort); do echo "* [${f}](${f})"; done) > _repo.md
-          git config user.name "Github Action"
-          git config user.email "ushi+github-action@honkgong.info"
-          git add .
-          git commit -m "release ${GITHUB_REF_NAME}"
-          git push
+          for f in *.deb Packages* Release* InRelease; do
+            curl -f -X PUT -u "${DAV_CREDENTIALS}" "https://dav.honkgong.info/repo/gesundheit/deb/${f}" -T "${f}"
+          done
+        env:
+          DAV_CREDENTIALS: ${{ secrets.DAV_CREDENTIALS }}
