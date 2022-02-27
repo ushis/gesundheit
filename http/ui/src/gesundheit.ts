@@ -9,11 +9,18 @@ export interface EventData {
 
 export class EventStream {
   static EVENTS_ENDPOINT = '/api/events';
-  static SOCKET_ENDPOINT = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/events/socket`;
+  static SOCKET_ENDPOINT = '/api/events/socket';
 
   private ws: WebSocket | null;
   private pingInterval: number | null;
   private handler: (event: EventData) => void;
+
+  static get SOCKET_URL(): string {
+    const url = new URL(location.toString());
+    url.pathname = EventStream.SOCKET_ENDPOINT;
+    url.protocol = (location.protocol === 'https:') ? 'wss:' : 'ws:';
+    return url.toString();
+  }
 
   constructor(handler: (event: EventData) => void) {
     this.ws = null;
@@ -24,7 +31,7 @@ export class EventStream {
   connect(): void {
     if (this.isConnecting || this.isOpen) return;
 
-    this.ws = new WebSocket(EventStream.SOCKET_ENDPOINT);
+    this.ws = new WebSocket(EventStream.SOCKET_URL);
     this.ws.addEventListener('close', () => this.reconnect());
     this.ws.addEventListener('error', () => this.reconnect());
     this.ws.addEventListener('message', (e) => this.handleMessage(e.data));
