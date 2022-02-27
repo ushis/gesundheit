@@ -11,16 +11,16 @@ export class EventStream {
   static EVENTS_ENDPOINT = '/api/events';
   static SOCKET_ENDPOINT = '/api/events/socket';
 
-  private ws: WebSocket | null;
-  private pingInterval: number | null;
-  private handler: (event: EventData) => void;
-
   static get SOCKET_URL(): string {
     const url = new URL(location.toString());
     url.pathname = EventStream.SOCKET_ENDPOINT;
     url.protocol = (location.protocol === 'https:') ? 'wss:' : 'ws:';
     return url.toString();
   }
+
+  private ws: WebSocket | null;
+  private pingInterval: number | null;
+  private handler: (event: EventData) => void;
 
   constructor(handler: (event: EventData) => void) {
     this.ws = null;
