@@ -2,9 +2,11 @@ export interface EventData {
   NodeName: string,
   CheckId: string,
   CheckDescription: string,
-  Result: number,
-  Message: string,
   Timestamp: string,
+  Result: {
+    Status: number,
+    Message: string,
+  },
 }
 
 export class EventStream {
@@ -19,12 +21,12 @@ export class EventStream {
   }
 
   private ws: WebSocket | null;
-  private pingInterval: number | null;
+  private heartbeat: number | null;
   private handler: (event: EventData) => void;
 
   constructor(handler: (event: EventData) => void) {
     this.ws = null;
-    this.pingInterval = null;
+    this.heartbeat = null;
     this.handler = handler;
   }
 
@@ -36,14 +38,14 @@ export class EventStream {
     this.ws.addEventListener('error', () => this.reconnect());
     this.ws.addEventListener('message', (e) => this.handleMessage(e.data));
 
-    if (this.pingInterval === null) {
-      this.pingInterval = setInterval(() => this.ping(), 25_000);
-    }
+    if (this.heartbeat === null)
+      this.heartbeat = setInterval(() => this.sendHeartbeat(), 25_000);
+
     this.fetchEvents();
   }
 
-  private ping() {
-    if (this.isOpen) this.ws?.send('🤓 ping 🤓');
+  private sendHeartbeat() {
+    if (this.isOpen) this.ws?.send('💓');
   }
 
   private async fetchEvents() {

@@ -10,13 +10,13 @@ const props = defineProps<{
 }>()
 
 const healthy = computed(() => (
-  props.events.every((event) => event.Result === 0)
+  props.events.every((event) => event.Result.Status === 0)
 ));
 
 const sortedEvents = computed(() => (
   [...props.events].sort((a, b) => {
-    if (a.Result < b.Result) return 1;
-    if (a.Result > b.Result) return -1;
+    if (a.Result.Status < b.Result.Status) return 1;
+    if (a.Result.Status > b.Result.Status) return -1;
     return b.Timestamp.localeCompare(a.Timestamp);
   })
 ))

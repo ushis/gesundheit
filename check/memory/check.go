@@ -3,7 +3,6 @@ package memory
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -38,25 +37,25 @@ func New(configure func(interface{}) error) (check.Check, error) {
 	return &Check{MinAvailable: minAvailable}, nil
 }
 
-func (c Check) Exec() (string, error) {
+func (c Check) Exec() check.Result {
 	f, err := os.Open("/proc/meminfo")
 
 	if err != nil {
-		return "", err
+		return check.Fail("failed to open /proc/meminfo: %s", err)
 	}
 	defer f.Close()
 
 	avail, total, err := readMeminfo(f)
 
 	if err != nil {
-		return "", err
+		return check.Fail("failed to read /proc/meminfo: %s", err)
 	}
 	availPercent := avail.Mul(size.N(100)).DivSize(total)
 
 	if avail.CompareTo(c.MinAvailable) < 0 {
-		return "", fmt.Errorf("system running out of available memory: %s (%s%%)", avail, availPercent)
+		return check.Fail("system running out of available memory: %s (%s%%)", avail, availPercent)
 	}
-	return fmt.Sprintf("system has %s (%s%%) of memory available", avail, availPercent), nil
+	return check.OK("system has %s (%s%%) of memory available", avail, availPercent)
 }
 
 func readMeminfo(r io.Reader) (avail size.Size, total size.Size, err error) {

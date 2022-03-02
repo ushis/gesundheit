@@ -6,8 +6,7 @@ type Event struct {
 	NodeName         string
 	CheckId          string
 	CheckDescription string
+	StatusHistory    StatusHistory
 	Result           Result
-	History          History
-	Message          string
 	Timestamp        time.Time
 }

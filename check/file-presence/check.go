@@ -1,7 +1,6 @@
 package filepresence
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/ushis/gesundheit/check"
@@ -25,20 +24,20 @@ func New(configure func(interface{}) error) (check.Check, error) {
 	return check, nil
 }
 
-func (c Check) Exec() (string, error) {
+func (c Check) Exec() check.Result {
 	_, err := os.Stat(c.Path)
 
 	if os.IsNotExist(err) {
 		if c.Present {
-			return "", fmt.Errorf("%s is absent", c.Path)
+			return check.Fail("%s is absent", c.Path)
 		}
-		return fmt.Sprintf("%s is absent", c.Path), nil
+		return check.OK("%s is absent", c.Path)
 	}
 	if err != nil {
-		return "", fmt.Errorf("failed to stat %s: %s", c.Path, err)
+		return check.Fail("failed to stat %s: %s", c.Path, err)
 	}
 	if !c.Present {
-		return "", fmt.Errorf("%s is present", c.Path)
+		return check.Fail("%s is present", c.Path)
 	}
-	return fmt.Sprintf("%s is present", c.Path), nil
+	return check.OK("%s is present", c.Path)
 }
