@@ -1,7 +1,6 @@
 package filemtime
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -36,16 +35,16 @@ func New(configure func(interface{}) error) (check.Check, error) {
 	return &Check{Path: cfg.Path, MaxAge: maxAge}, nil
 }
 
-func (c Check) Exec() (string, error) {
+func (c Check) Exec() check.Result {
 	info, err := os.Stat(c.Path)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to stat %s: %s", c.Path, err)
+		return check.Fail("failed to stat %s: %s", c.Path, err)
 	}
 	age := time.Since(info.ModTime()).Truncate(time.Second)
 
 	if age > c.MaxAge {
-		return "", fmt.Errorf("mtime of %s is %s overdue", c.Path, age-c.MaxAge)
+		return check.Fail("mtime of %s is %s overdue", c.Path, age-c.MaxAge)
 	}
-	return fmt.Sprintf("%s has been touched %s ago", c.Path, age), nil
+	return check.OK("%s has been touched %s ago", c.Path, age)
 }

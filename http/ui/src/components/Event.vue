@@ -5,7 +5,7 @@ import Dot from './Dot.vue';
 import TimeAgo from './TimeAgo.vue';
 
 const props = defineProps<{ event: EventData }>();
-const healthy = computed(() => props.event.Result === 0);
+const healthy = computed(() => props.event.Result.Status === 0);
 const isOpen = ref(!healthy.value);
 
 watch(healthy, (healthy) => {
@@ -36,7 +36,7 @@ watch(healthy, (healthy) => {
       class="card-body"
       :class="{ 'd-none': !isOpen }"
     >
-      <code class="text-dark">{{ event.Message }}</code>
+      <code class="text-dark">{{ event.Result.Message }}</code>
     </div>
   </div>
 </template>

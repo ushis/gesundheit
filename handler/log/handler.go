@@ -18,6 +18,12 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 }
 
 func (h Handler) Handle(e check.Event) error {
-	log.Printf("%s: %s %s: %s", e.NodeName, e.CheckDescription, e.Result, e.Message)
+	log.Printf(
+		"%s: %s %s: %s",
+		e.NodeName,
+		e.CheckDescription,
+		e.Result.Status,
+		e.Result.Message,
+	)
 	return nil
 }

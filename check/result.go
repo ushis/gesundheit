@@ -1,28 +1,43 @@
 package check
 
-type Result uint8
+import "fmt"
+
+type Status uint8
 
 const (
-	OK       Result = 0
-	CRITICAL Result = 1
+	STATUS_OK   Status = 0
+	STATUS_FAIL Status = 1
 )
 
-func (r Result) String() string {
-	if r == OK {
+func (s Status) String() string {
+	if s == STATUS_OK {
 		return "OK"
 	}
-	return "CRITICAL"
+	return "FAIL"
 }
 
-type History uint32
+type StatusHistory uint32
 
-func (h *History) Append(r Result) {
-	if r > 1 {
-		panic("result out of bounds")
+func (h *StatusHistory) Append(s Status) {
+	if s > 1 {
+		panic("status out of bounds")
 	}
-	*h = (*h << 1) | History(r)
+	*h = (*h << 1) | StatusHistory(s)
 }
 
-func (h *History) Last() Result {
-	return Result(*h & 1)
+func (h *StatusHistory) Last() Status {
+	return Status(*h & 1)
+}
+
+type Result struct {
+	Status  Status
+	Message string
+}
+
+func OK(format string, args ...interface{}) Result {
+	return Result{STATUS_OK, fmt.Sprintf(format, args...)}
+}
+
+func Fail(format string, args ...interface{}) Result {
+	return Result{STATUS_FAIL, fmt.Sprintf(format, args...)}
 }

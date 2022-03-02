@@ -46,8 +46,8 @@ type Message struct {
 
 func (h Handler) Handle(e check.Event) error {
 	msg := Message{
-		Title:    fmt.Sprintf("(%s) %s %s", e.NodeName, e.CheckDescription, e.Result),
-		Message:  e.Message,
+		Title:    fmt.Sprintf("(%s) %s %s", e.NodeName, e.CheckDescription, e.Result.Status),
+		Message:  e.Result.Message,
 		Priority: h.Priority,
 	}
 	buf := bytes.NewBuffer(nil)

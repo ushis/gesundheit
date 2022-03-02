@@ -49,14 +49,23 @@ func (r Runner) run(ctx context.Context, events chan<- Event) {
 	case <-ctx.Done():
 		return
 	}
-	history := History(OK)
+	var statusHistory StatusHistory
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
-		event := r.exec(history)
-		history.Append(event.Result)
+		result := r.check.Exec()
+
+		event := Event{
+			NodeName:         r.node.Name,
+			CheckId:          r.id,
+			CheckDescription: r.description,
+			StatusHistory:    statusHistory,
+			Result:           result,
+			Timestamp:        time.Now(),
+		}
+		statusHistory.Append(result.Status)
 
 		select {
 		case events <- event:
@@ -69,22 +78,4 @@ func (r Runner) run(ctx context.Context, events chan<- Event) {
 			return
 		}
 	}
-}
-
-func (r Runner) exec(history History) Event {
-	e := Event{
-		NodeName:         r.node.Name,
-		CheckId:          r.id,
-		CheckDescription: r.description,
-		History:          history,
-		Timestamp:        time.Now(),
-	}
-	if msg, err := r.check.Exec(); err != nil {
-		e.Result = CRITICAL
-		e.Message = err.Error()
-	} else {
-		e.Result = OK
-		e.Message = msg
-	}
-	return e
 }

@@ -3,7 +3,6 @@ package mtime
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/itchyny/gojq"
 	"github.com/ushis/gesundheit/check"
@@ -52,16 +51,16 @@ func New(configure func(interface{}) error) (check.Check, error) {
 	return &Check{HttpConf: conf.Config, Query: query, Value: conf.Value}, nil
 }
 
-func (c Check) Exec() (string, error) {
+func (c Check) Exec() check.Result {
 	resp, err := http.Request(c.HttpConf)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to %s: %s", c.HttpConf, err)
+		return check.Fail("failed to %s: %s", c.HttpConf, err)
 	}
 	body := make(map[string]interface{})
 
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return "", fmt.Errorf("failed to decode response: %s", err.Error())
+		return check.Fail("failed to decode response: %s", err.Error())
 	}
 	iter := c.Query.Run(body)
 	n := 0
@@ -71,18 +70,18 @@ func (c Check) Exec() (string, error) {
 
 		if !ok {
 			if n == 0 {
-				return "", fmt.Errorf("%s -> \"%s\" returned no values", c.HttpConf, c.Query)
+				return check.Fail("%s -> \"%s\" returned no values", c.HttpConf, c.Query)
 			}
-			return fmt.Sprintf("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, c.Value), nil
+			return check.OK("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, c.Value)
 		}
 		if n > 1 {
-			return "", fmt.Errorf("%s -> \"%s\" returned multiple values", c.HttpConf, c.Query)
+			return check.Fail("%s -> \"%s\" returned multiple values", c.HttpConf, c.Query)
 		}
 		if n, ok := v.(int); ok {
 			v = int64(n)
 		}
 		if v != c.Value {
-			return "", fmt.Errorf("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, v)
+			return check.Fail("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, v)
 		}
 		n += 1
 	}
