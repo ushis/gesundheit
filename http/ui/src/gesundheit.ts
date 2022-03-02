@@ -21,12 +21,12 @@ export class EventStream {
   }
 
   private ws: WebSocket | null;
-  private heartbeatInterval: number | null;
+  private heartbeat: number | null;
   private handler: (event: EventData) => void;
 
   constructor(handler: (event: EventData) => void) {
     this.ws = null;
-    this.heartbeatInterval = null;
+    this.heartbeat = null;
     this.handler = handler;
   }
 
@@ -38,13 +38,13 @@ export class EventStream {
     this.ws.addEventListener('error', () => this.reconnect());
     this.ws.addEventListener('message', (e) => this.handleMessage(e.data));
 
-    if (this.heartbeatInterval === null) {
-      this.heartbeatInterval = setInterval(() => this.heartbeat(), 25_000);
-    }
+    if (this.heartbeat === null)
+      this.heartbeat = setInterval(() => this.sendHeartbeat(), 25_000);
+
     this.fetchEvents();
   }
 
-  private heartbeat() {
+  private sendHeartbeat() {
     if (this.isOpen) this.ws?.send('💓');
   }
 
