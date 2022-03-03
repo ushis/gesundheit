@@ -223,6 +223,23 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>MinAvailable</td>
       <td>Min available memory considered healthy, e.g. <code>"1G"</code></td>
     </tr>
+    <tr>
+      <td rowspan="3"><strong>tls-cert</strong></td>
+      <td rowspan="3">Check tls certificate</td>
+      <td>Host</td>
+      <td>Host to check, e.g. <code>"example.org"</code></td>
+    </tr>
+    <tr>
+      <td>Port</td>
+      <td>Port to connect to, e.g. <code>443</code></td>
+    </tr>
+    <tr>
+      <td>MinTTL</td>
+      <td>
+        Min time until certificate expiry considered healthy,
+        e.g. <code>"24h"</code>
+      </td>
+    </tr>
   </tbody>
 </table>
 
