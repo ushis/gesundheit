@@ -44,6 +44,8 @@ func (c Check) Exec() check.Result {
 	if err != nil {
 		return check.Fail("failed to connect to %s: %s", c.Addr, err)
 	}
+	defer conn.Close()
+
 	if err := conn.VerifyHostname(c.Host); err != nil {
 		return check.Fail("failed to verify hostname %s: %s", c.Host, err)
 	}
