@@ -207,7 +207,7 @@ func (l modConfLoader) loadHandler(conf *handlerConfig, path string, meta toml.M
 		}
 		filters = append(filters, f)
 	}
-	l.hub.registerHandler(handler.FilteredHandler{Handler: hdl, Filters: filters})
+	l.hub.registerHandler(filter.Handler(hdl, filters))
 
 	if len(meta.Undecoded()) > 0 {
 		return fmt.Errorf("failed to load handler config: %s: unknown field %s", path, meta.Undecoded()[0])
