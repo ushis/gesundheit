@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/handler"
 	"github.com/ushis/gesundheit/input"
 )
@@ -31,7 +32,7 @@ func (h *hub) registerHandler(r handler.Handler) {
 func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
 	ctx, cancelRunners := context.WithCancel(ctx)
 	runnersWg := sync.WaitGroup{}
-	events := make(chan check.Event)
+	events := make(chan result.Event)
 
 	if err := h.runRunners(ctx, &runnersWg, events); err != nil {
 		cancelRunners()
@@ -58,7 +59,7 @@ func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
 	return nil
 }
 
-func (h *hub) runRunners(ctx context.Context, wg *sync.WaitGroup, events chan<- check.Event) error {
+func (h *hub) runRunners(ctx context.Context, wg *sync.WaitGroup, events chan<- result.Event) error {
 	for _, r := range h.inputRunners {
 		if err := r.Run(ctx, wg, events); err != nil {
 			return err
@@ -72,7 +73,7 @@ func (h *hub) runRunners(ctx context.Context, wg *sync.WaitGroup, events chan<- 
 	return nil
 }
 
-func (h *hub) dispatch(e check.Event) {
+func (h *hub) dispatch(e result.Event) {
 	for _, r := range h.handlers {
 		if err := r.Handle(e); err != nil {
 			log.Println(err)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/check/http"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Check struct {
@@ -21,7 +22,7 @@ func init() {
 	check.Register("http-status", New)
 }
 
-func New(configure func(interface{}) error) (check.Check, error) {
+func New(_ check.Database, configure func(interface{}) error) (check.Check, error) {
 	conf := Config{}
 
 	if err := configure(&conf); err != nil {
@@ -36,14 +37,14 @@ func New(configure func(interface{}) error) (check.Check, error) {
 	return Check{HttpConf: conf.Config, Status: conf.Status}, nil
 }
 
-func (c Check) Exec() check.Result {
+func (c Check) Exec() result.Result {
 	resp, err := http.Request(c.HttpConf)
 
 	if err != nil {
-		return check.Fail("failed to get %s: %s", c.HttpConf, err.Error())
+		return result.Fail("failed to get %s: %s", c.HttpConf, err.Error())
 	}
 	if resp.StatusCode != c.Status {
-		return check.Fail("%s responded with \"%s\"", c.HttpConf, resp.Status)
+		return result.Fail("%s responded with \"%s\"", c.HttpConf, resp.Status)
 	}
-	return check.OK("%s responded with \"%s\"", c.HttpConf, resp.Status)
+	return result.OK("%s responded with \"%s\"", c.HttpConf, resp.Status)
 }

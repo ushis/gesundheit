@@ -7,6 +7,7 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/check/http"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Check struct {
@@ -25,7 +26,7 @@ func init() {
 	check.Register("http-json", New)
 }
 
-func New(configure func(interface{}) error) (check.Check, error) {
+func New(_ check.Database, configure func(interface{}) error) (check.Check, error) {
 	conf := Config{}
 
 	if err := configure(&conf); err != nil {
@@ -51,16 +52,16 @@ func New(configure func(interface{}) error) (check.Check, error) {
 	return &Check{HttpConf: conf.Config, Query: query, Value: conf.Value}, nil
 }
 
-func (c Check) Exec() check.Result {
+func (c Check) Exec() result.Result {
 	resp, err := http.Request(c.HttpConf)
 
 	if err != nil {
-		return check.Fail("failed to %s: %s", c.HttpConf, err)
+		return result.Fail("failed to %s: %s", c.HttpConf, err)
 	}
 	body := make(map[string]interface{})
 
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return check.Fail("failed to decode response: %s", err.Error())
+		return result.Fail("failed to decode response: %s", err.Error())
 	}
 	iter := c.Query.Run(body)
 	n := 0
@@ -70,18 +71,18 @@ func (c Check) Exec() check.Result {
 
 		if !ok {
 			if n == 0 {
-				return check.Fail("%s -> \"%s\" returned no values", c.HttpConf, c.Query)
+				return result.Fail("%s -> \"%s\" returned no values", c.HttpConf, c.Query)
 			}
-			return check.OK("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, c.Value)
+			return result.OK("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, c.Value)
 		}
 		if n > 1 {
-			return check.Fail("%s -> \"%s\" returned multiple values", c.HttpConf, c.Query)
+			return result.Fail("%s -> \"%s\" returned multiple values", c.HttpConf, c.Query)
 		}
 		if n, ok := v.(int); ok {
 			v = int64(n)
 		}
 		if v != c.Value {
-			return check.Fail("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, v)
+			return result.Fail("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, v)
 		}
 		n += 1
 	}

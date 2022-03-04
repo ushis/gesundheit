@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/filter"
 )
 
@@ -30,7 +30,7 @@ func New(configure func(interface{}) error) (filter.Filter, error) {
 	return f, nil
 }
 
-func (f Filter) Filter(e check.Event) (check.Event, bool) {
+func (f Filter) Filter(e result.Event) (result.Event, bool) {
 	now := Now()
 
 	for _, hours := range f.Hours {

@@ -2,11 +2,10 @@ export interface EventData {
   NodeName: string,
   CheckId: string,
   CheckDescription: string,
+  StatusHistory: number,
+  Status: number,
+  Message: string,
   Timestamp: string,
-  Result: {
-    Status: number,
-    Message: string,
-  },
 }
 
 export class EventStream {

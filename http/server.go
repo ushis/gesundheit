@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/db"
 
 	"github.com/gobwas/ws"
@@ -65,7 +65,7 @@ func (s *Server) Run(ctx context.Context, wg *sync.WaitGroup) error {
 	return nil
 }
 
-func (s *Server) Handle(e check.Event) error {
+func (s *Server) Handle(e result.Event) error {
 	s.sockets.broadcast(e)
 	return nil
 }

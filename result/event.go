@@ -1,4 +1,4 @@
-package check
+package result
 
 import "time"
 
@@ -7,6 +7,7 @@ type Event struct {
 	CheckId          string
 	CheckDescription string
 	StatusHistory    StatusHistory
-	Result           Result
+	Status           Status
+	Message          string
 	Timestamp        time.Time
 }

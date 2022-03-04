@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Check struct {
@@ -15,7 +16,7 @@ func init() {
 	check.Register("file-presence", New)
 }
 
-func New(configure func(interface{}) error) (check.Check, error) {
+func New(_ check.Database, configure func(interface{}) error) (check.Check, error) {
 	check := Check{Present: true}
 
 	if err := configure(&check); err != nil {
@@ -24,20 +25,20 @@ func New(configure func(interface{}) error) (check.Check, error) {
 	return check, nil
 }
 
-func (c Check) Exec() check.Result {
+func (c Check) Exec() result.Result {
 	_, err := os.Stat(c.Path)
 
 	if os.IsNotExist(err) {
 		if c.Present {
-			return check.Fail("%s is absent", c.Path)
+			return result.Fail("%s is absent", c.Path)
 		}
-		return check.OK("%s is absent", c.Path)
+		return result.OK("%s is absent", c.Path)
 	}
 	if err != nil {
-		return check.Fail("failed to stat %s: %s", c.Path, err)
+		return result.Fail("failed to stat %s: %s", c.Path, err)
 	}
 	if !c.Present {
-		return check.Fail("%s is present", c.Path)
+		return result.Fail("%s is present", c.Path)
 	}
-	return check.OK("%s is present", c.Path)
+	return result.OK("%s is present", c.Path)
 }

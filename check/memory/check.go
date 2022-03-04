@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/check/size"
 )
 
@@ -23,7 +24,7 @@ func init() {
 	check.Register("memory", New)
 }
 
-func New(configure func(interface{}) error) (check.Check, error) {
+func New(_ check.Database, configure func(interface{}) error) (check.Check, error) {
 	cfg := Config{}
 
 	if err := configure(&cfg); err != nil {
@@ -37,25 +38,25 @@ func New(configure func(interface{}) error) (check.Check, error) {
 	return &Check{MinAvailable: minAvailable}, nil
 }
 
-func (c Check) Exec() check.Result {
+func (c Check) Exec() result.Result {
 	f, err := os.Open("/proc/meminfo")
 
 	if err != nil {
-		return check.Fail("failed to open /proc/meminfo: %s", err)
+		return result.Fail("failed to open /proc/meminfo: %s", err)
 	}
 	defer f.Close()
 
 	avail, total, err := readMeminfo(f)
 
 	if err != nil {
-		return check.Fail("failed to read /proc/meminfo: %s", err)
+		return result.Fail("failed to read /proc/meminfo: %s", err)
 	}
 	availPercent := avail.Mul(size.N(100)).DivSize(total)
 
 	if avail.CompareTo(c.MinAvailable) < 0 {
-		return check.Fail("system running out of available memory: %s (%s%%)", avail, availPercent)
+		return result.Fail("system running out of available memory: %s (%s%%)", avail, availPercent)
 	}
-	return check.OK("system has %s (%s%%) of memory available", avail, availPercent)
+	return result.OK("system has %s (%s%%) of memory available", avail, availPercent)
 }
 
 func readMeminfo(r io.Reader) (avail size.Size, total size.Size, err error) {

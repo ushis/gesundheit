@@ -8,7 +8,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/crypto"
 	"github.com/ushis/gesundheit/input"
 )
@@ -61,7 +61,7 @@ func New(configure func(interface{}) error) (input.Input, error) {
 	return &Input{Addr: conf.Listen, Peers: peers}, nil
 }
 
-func (i *Input) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- check.Event) error {
+func (i *Input) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- result.Event) error {
 	conn, err := net.ListenPacket("udp", i.Addr)
 
 	if err != nil {
@@ -82,7 +82,7 @@ func (i *Input) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- check
 	return nil
 }
 
-func (i Input) serve(conn net.PacketConn, events chan<- check.Event) {
+func (i Input) serve(conn net.PacketConn, events chan<- result.Event) {
 	plain := make([]byte, 1024)
 	packet := make([]byte, 1024)
 
@@ -105,7 +105,7 @@ func (i Input) serve(conn net.PacketConn, events chan<- check.Event) {
 	}
 }
 
-func (i Input) decodePacket(buf, packet []byte) (e check.Event, err error) {
+func (i Input) decodePacket(buf, packet []byte) (e result.Event, err error) {
 	plaintext, err := i.decryptPacket(buf[:0], packet)
 
 	if err != nil {
