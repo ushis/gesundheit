@@ -300,21 +300,21 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     </tr>
     <tr>
       <td rowspan="3"><strong>remote</strong></td>
-      <td rowspan="3">Send check results to a remote gesundheit service</td>
+      <td rowspan="3">Send check results to a remote gesundheit node</td>
       <td>Address</td>
-      <td>Address of the remote service, e.g. <code>"gesundheit.example.org:9999"</code></td>
+      <td>Address of the remote node, e.g. <code>"gesundheit.example.org:9999"</code></td>
     </tr>
     <tr>
       <td>PrivateKey</td>
       <td>
-        Private key of the local service, generated
+        Private key of the local node, generated
         with <code>gesundheit genkey</code>
       </td>
     </tr>
     <tr>
       <td>PublicKey</td>
       <td>
-        Public key of the remote gesundheit service,
+        Public key of the remote gesundheit node,
         generated with <code>gesundheit pubkey</code>
       </td>
     </tr>
@@ -366,14 +366,14 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
   <tbody>
     <tr>
       <td rowspan="3"><strong>remote</strong></td>
-      <td rowspan="3">Receive check results from a remote gesundheit service</td>
+      <td rowspan="3">Receive check results from a remote gesundheit node</td>
       <td>Listen</td>
       <td>Address to listen on, e.g. <code>"0.0.0.0:9999"</code></td>
     </tr>
     <tr>
       <td>PrivateKey</td>
       <td>
-        Private key of the local service, generated
+        Private key of the local node, generated
         with <code>gesundheit genkey</code>
       </td>
     </tr>
