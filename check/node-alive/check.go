@@ -42,10 +42,10 @@ func (c Check) Exec() result.Result {
 	if !ok {
 		return result.Fail("haven't seen %s at all", c.NodeName)
 	}
-	unseenPeriod := time.Since(event.Timestamp).Truncate(time.Second)
+	absenceTime := time.Since(event.Timestamp).Truncate(time.Second)
 
-	if unseenPeriod > c.MaxAbsenceTime {
-		return result.Fail("haven't seen %s for %s", c.NodeName, unseenPeriod)
+	if absenceTime > c.MaxAbsenceTime {
+		return result.Fail("haven't seen %s for %s", c.NodeName, absenceTime)
 	}
-	return result.OK("saw %s %s ago", c.NodeName, unseenPeriod)
+	return result.OK("saw %s %s ago", c.NodeName, absenceTime)
 }
