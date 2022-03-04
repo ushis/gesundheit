@@ -3,6 +3,13 @@
 Path = "-"
 Timestamps = false
 
+# Write check results to disk
+[Database]
+Module = "persistent"
+
+[Database.Config]
+Path = "/var/lib/gesundheit/data"
+
 # Enable if you need a pretty web interface
 [Http]
 Enabled = false

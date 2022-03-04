@@ -27,6 +27,7 @@ import (
 	_ "github.com/ushis/gesundheit/check/tls-cert"
 	"github.com/ushis/gesundheit/crypto"
 	_ "github.com/ushis/gesundheit/db/memory"
+	_ "github.com/ushis/gesundheit/db/persistent"
 	_ "github.com/ushis/gesundheit/filter/office-hours"
 	_ "github.com/ushis/gesundheit/filter/result-change"
 	_ "github.com/ushis/gesundheit/handler/gotify"
@@ -90,6 +91,8 @@ func cmdServe(args []string) {
 	if err != nil {
 		log.Fatalln("failed to load config:", err)
 	}
+	defer db.Close()
+
 	f, err := openLog(conf.Log.Path)
 
 	if err != nil {
