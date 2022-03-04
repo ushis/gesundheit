@@ -1,9 +1,10 @@
 package badger
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -64,21 +65,25 @@ func (db Database) Close() error {
 }
 
 func (db Database) Handle(e result.Event) error {
-	val, err := encodeEvent(e)
+	key := buildKey("event", e.NodeName, e.CheckId)
+	ttl := time.Duration(e.CheckInterval) * time.Second * 2
+	return db.update(key, e, ttl)
+}
+
+func (db Database) update(key []byte, value interface{}, ttl time.Duration) error {
+	val, err := json.Marshal(value)
 
 	if err != nil {
 		return err
 	}
-	key := []byte(fmt.Sprintf("event:%s:%s", e.NodeName, e.CheckId))
-	ttl := time.Duration(e.CheckInterval) * time.Second * 2
-
 	return db.badger.Update(func(txn *badger.Txn) error {
 		return txn.SetEntry(badger.NewEntry(key, val).WithTTL(ttl))
 	})
 }
 
-func (db Database) getEvents(p string) ([]result.Event, error) {
-	prefix := []byte("event:" + p)
+func (db Database) getEvents(path ...string) ([]result.Event, error) {
+	path = append([]string{"event"}, path...)
+	prefix := buildKeyPrefix(path...)
 	events := []result.Event{}
 
 	txn := db.badger.NewTransaction(false)
@@ -89,7 +94,8 @@ func (db Database) getEvents(p string) ([]result.Event, error) {
 
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 		err := it.Item().Value(func(val []byte) error {
-			event, err := decodeEvent(val)
+			event := result.Event{}
+			err := json.Unmarshal(val, &event)
 			events = append(events, event)
 			return err
 		})
@@ -100,22 +106,12 @@ func (db Database) getEvents(p string) ([]result.Event, error) {
 	return events, nil
 }
 
-func decodeEvent(buf []byte) (result.Event, error) {
-	e := result.Event{}
-	err := json.Unmarshal(buf, &e)
-	return e, err
-}
-
-func encodeEvent(e result.Event) ([]byte, error) {
-	return json.Marshal(e)
-}
-
 func (db Database) GetEvents() ([]result.Event, error) {
-	return db.getEvents("")
+	return db.getEvents()
 }
 
 func (db Database) GetEventsByNode(name string) ([]result.Event, error) {
-	return db.getEvents(name + ":")
+	return db.getEvents(name)
 }
 
 func (db Database) GetLatestEventByNode(name string) (e result.Event, ok bool, err error) {
@@ -132,4 +128,26 @@ func (db Database) GetLatestEventByNode(name string) (e result.Event, ok bool, e
 		}
 	}
 	return e, true, nil
+}
+
+const pathSep = ":"
+
+func buildKey(path ...string) []byte {
+	return []byte(strings.Join(path, pathSep))
+}
+
+func buildKeyPrefix(path ...string) []byte {
+	n := len(path) * len(pathSep)
+
+	for _, p := range path {
+		n += len(p)
+	}
+	b := bytes.Buffer{}
+	b.Grow(n)
+
+	for _, p := range path {
+		b.WriteString(p)
+		b.WriteString(pathSep)
+	}
+	return b.Bytes()
 }
