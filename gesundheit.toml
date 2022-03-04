@@ -1,4 +1,10 @@
 # Dev config. See pkg/gesundheit.toml for reasonable production settings.
+[Database]
+Module = "persistent"
+
+[Database.Config]
+Path = "/tmp/gesundheit.db"
+
 [Http]
 Enabled = true
 Listen = ":8080"

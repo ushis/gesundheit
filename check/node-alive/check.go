@@ -37,8 +37,11 @@ func New(db check.Database, configure func(interface{}) error) (check.Check, err
 }
 
 func (c Check) Exec() result.Result {
-	event, ok := c.db.GetLatestEventByNode(c.NodeName)
+	event, ok, err := c.db.GetLatestEventByNode(c.NodeName)
 
+	if err != nil {
+		return result.Fail("failed to retreive events: %s", err)
+	}
 	if !ok {
 		return result.Fail("haven't seen %s at all", c.NodeName)
 	}

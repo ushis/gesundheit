@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/node"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Runner struct {
@@ -50,7 +50,8 @@ func (r Runner) run(ctx context.Context, events chan<- result.Event) {
 	case <-ctx.Done():
 		return
 	}
-	var statusHistory result.StatusHistory
+	statusHistory := result.StatusHistory(result.StatusOK)
+	checkInterval := uint64(interval / time.Second)
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -62,6 +63,7 @@ func (r Runner) run(ctx context.Context, events chan<- result.Event) {
 			NodeName:         r.node.Name,
 			CheckId:          r.id,
 			CheckDescription: r.description,
+			CheckInterval:    checkInterval,
 			StatusHistory:    statusHistory,
 			Status:           res.Status,
 			Message:          res.Message,

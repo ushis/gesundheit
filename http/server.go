@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/db"
+	"github.com/ushis/gesundheit/result"
 
 	"github.com/gobwas/ws"
 )
@@ -79,9 +79,12 @@ func (s *Server) run(l net.Listener) {
 }
 
 func (s *Server) serveEvents(w http.ResponseWriter, r *http.Request) {
-	events := s.db.GetEvents()
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(events)
+	if events, err := s.db.GetEvents(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(w).Encode(events)
+	}
 }
 
 func (s *Server) serveEventsSocket(w http.ResponseWriter, r *http.Request) {

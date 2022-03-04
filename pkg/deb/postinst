@@ -7,3 +7,7 @@ fi
 if test -x /bin/systemd-sysusers; then
   /bin/systemd-sysusers gesundheit.conf
 fi
+
+if test -x /bin/systemd-tmpfiles; then
+  /bin/systemd-tmpfiles --create gesundheit.conf
+fi
