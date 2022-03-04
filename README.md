@@ -169,6 +169,14 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       </td>
     </tr>
     <tr>
+      <td><strong>heartbeat</strong></td>
+      <td>Always <code>OK</code></td>
+      <td colspan="2">Useful in combination with a
+        <strong>remote</strong> handler and a <strong>node-alive</strong>
+        check on the remote node
+      </td>
+    </tr>
+    <tr>
       <td rowspan="5"><strong>http-json</strong></td>
       <td rowspan="5">Check json value in http response</td>
       <td>Method</td>
@@ -224,6 +232,21 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>Min available memory considered healthy, e.g. <code>"1G"</code></td>
     </tr>
     <tr>
+      <td rowspan="2"><strong>node-alive</strong></td>
+      <td rowspan="2">Check last appearance of a (remote) node</td>
+      <td>Node</td>
+      <td>Node to check, e.g. <code>"proxy-01"</code></td>
+    </tr>
+    <tr>
+      <td>MaxAbsenceTime</td>
+      <td>
+        Max time since last appearance considered healthy,
+        e.g. <code>"1m"</code>.
+        Configure <strong>heartbeat</strong> with a low interval on the remote node
+        if you need timely notifications about absent nodes.
+      </td>
+    </tr>
+    <tr>
       <td rowspan="3"><strong>tls-cert</strong></td>
       <td rowspan="3">Check tls certificate</td>
       <td>Host</td>
@@ -252,7 +275,6 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <th>Description</th>
       <th>Config</th>
       <th>Config Description</th>
-      <th>Default</th>
     </tr>
   </thead>
   <tbody>
@@ -261,22 +283,18 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td rowspan="3">Send check results to gotify</td>
       <td>Url</td>
       <td>Url of the gotify server</td>
-      <td></td>
     </tr>
     <tr>
       <td>Token</td>
       <td>Gotify application token</td>
-      <td></td>
     </tr>
     <tr>
       <td>Priority</td>
       <td>Priority of every gotify message</td>
-      <td><code>4</code></td>
     </tr>
     <tr>
       <td><strong>log</strong></td>
       <td>Log check results</td>
-      <td></td>
       <td></td>
       <td></td>
     </tr>
@@ -285,7 +303,6 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td rowspan="3">Send check results to a remote gesundheit service</td>
       <td>Address</td>
       <td>Address of the remote service, e.g. <code>"gesundheit.example.org:9999"</code></td>
-      <td></td>
     </tr>
     <tr>
       <td>PrivateKey</td>
@@ -293,7 +310,6 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
         Private key of the local service, generated
         with <code>gesundheit genkey</code>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td>PublicKey</td>
@@ -301,7 +317,6 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
         Public key of the remote gesundheit service,
         generated with <code>gesundheit pubkey</code>
       </td>
-      <td></td>
     </tr>
   </tbody>
 </table>
