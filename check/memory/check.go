@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/ushis/gesundheit/check"
-	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/check/size"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Check struct {
@@ -25,12 +25,12 @@ func init() {
 }
 
 func New(_ check.Database, configure func(interface{}) error) (check.Check, error) {
-	cfg := Config{}
+	conf := Config{}
 
-	if err := configure(&cfg); err != nil {
+	if err := configure(&conf); err != nil {
 		return nil, err
 	}
-	minAvailable, err := size.Parse(cfg.MinAvailable)
+	minAvailable, err := size.Parse(conf.MinAvailable)
 
 	if err != nil {
 		return nil, err
