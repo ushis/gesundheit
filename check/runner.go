@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/node"
 )
 
@@ -27,7 +28,7 @@ func NewRunner(node node.Info, id, description string, interval time.Duration, c
 	}
 }
 
-func (r Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Event) error {
+func (r Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- result.Event) error {
 	wg.Add(1)
 
 	go func() {
@@ -38,7 +39,7 @@ func (r Runner) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- Event
 	return nil
 }
 
-func (r Runner) run(ctx context.Context, events chan<- Event) {
+func (r Runner) run(ctx context.Context, events chan<- result.Event) {
 	maxJitter := r.interval / 60
 	jitter := time.Duration(rand.Uint64() & uint64(2*maxJitter))
 	interval := r.interval + jitter - maxJitter
@@ -49,23 +50,24 @@ func (r Runner) run(ctx context.Context, events chan<- Event) {
 	case <-ctx.Done():
 		return
 	}
-	var statusHistory StatusHistory
+	var statusHistory result.StatusHistory
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
-		result := r.check.Exec()
+		res := r.check.Exec()
 
-		event := Event{
+		event := result.Event{
 			NodeName:         r.node.Name,
 			CheckId:          r.id,
 			CheckDescription: r.description,
 			StatusHistory:    statusHistory,
-			Result:           result,
+			Status:           res.Status,
+			Message:          res.Message,
 			Timestamp:        time.Now(),
 		}
-		statusHistory.Append(result.Status)
+		statusHistory.Append(res.Status)
 
 		select {
 		case events <- event:

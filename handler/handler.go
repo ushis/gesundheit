@@ -1,9 +1,7 @@
 package handler
 
-import (
-	"github.com/ushis/gesundheit/check"
-)
+import "github.com/ushis/gesundheit/result"
 
 type Handler interface {
-	Handle(check.Event) error
+	Handle(result.Event) error
 }

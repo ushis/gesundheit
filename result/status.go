@@ -1,13 +1,11 @@
-package check
-
-import "fmt"
-
-type Status uint8
+package result
 
 const (
 	StatusOK   Status = 0
 	StatusFail Status = 1
 )
+
+type Status uint8
 
 func (s Status) String() string {
 	if s == StatusOK {
@@ -27,17 +25,4 @@ func (h *StatusHistory) Append(s Status) {
 
 func (h *StatusHistory) Last() Status {
 	return Status(*h & 1)
-}
-
-type Result struct {
-	Status  Status
-	Message string
-}
-
-func OK(format string, args ...interface{}) Result {
-	return Result{StatusOK, fmt.Sprintf(format, args...)}
-}
-
-func Fail(format string, args ...interface{}) Result {
-	return Result{StatusFail, fmt.Sprintf(format, args...)}
 }

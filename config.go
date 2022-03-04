@@ -118,10 +118,11 @@ func loadConf(path string) (config, db.Database, *http.Server, error) {
 type modConfLoader struct {
 	node node.Info
 	hub  *hub
+	db   db.Database
 }
 
-func newModConfLoader(node node.Info, hub *hub) modConfLoader {
-	return modConfLoader{node, hub}
+func newModConfLoader(node node.Info, hub *hub, db db.Database) modConfLoader {
+	return modConfLoader{node, hub, db}
 }
 
 func (l modConfLoader) loadAll(glob string) error {
@@ -163,7 +164,7 @@ func (l modConfLoader) loadCheck(conf *checkConfig, path string, meta toml.MetaD
 	if err != nil {
 		return fmt.Errorf("failed to load check config: %s: %s", path, err.Error())
 	}
-	chk, err := fn(func(cfg interface{}) error {
+	chk, err := fn(l.db, func(cfg interface{}) error {
 		return meta.PrimitiveDecode(conf.Config, cfg)
 	})
 	if err != nil {

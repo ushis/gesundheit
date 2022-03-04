@@ -19,9 +19,11 @@ import (
 	_ "github.com/ushis/gesundheit/check/disk-space"
 	_ "github.com/ushis/gesundheit/check/file-mtime"
 	_ "github.com/ushis/gesundheit/check/file-presence"
+	_ "github.com/ushis/gesundheit/check/heartbeat"
 	_ "github.com/ushis/gesundheit/check/http-json"
 	_ "github.com/ushis/gesundheit/check/http-status"
 	_ "github.com/ushis/gesundheit/check/memory"
+	_ "github.com/ushis/gesundheit/check/node-alive"
 	_ "github.com/ushis/gesundheit/check/tls-cert"
 	"github.com/ushis/gesundheit/crypto"
 	_ "github.com/ushis/gesundheit/db/memory"
@@ -105,7 +107,7 @@ func cmdServe(args []string) {
 
 	confDir := filepath.Dir(confPath)
 	modConfs := filepath.Join(confDir, conf.Modules.Config)
-	modConfLoader := newModConfLoader(conf.Node, h)
+	modConfLoader := newModConfLoader(conf.Node, h, db)
 
 	if err := modConfLoader.loadAll(modConfs); err != nil {
 		log.Fatalln("failed to load module config:", err)

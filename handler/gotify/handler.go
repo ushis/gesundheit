@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/handler"
 )
 
@@ -44,10 +44,10 @@ type Message struct {
 	Priority int    `json:"priority"`
 }
 
-func (h Handler) Handle(e check.Event) error {
+func (h Handler) Handle(e result.Event) error {
 	msg := Message{
-		Title:    fmt.Sprintf("(%s) %s %s", e.NodeName, e.CheckDescription, e.Result.Status),
-		Message:  e.Result.Message,
+		Title:    fmt.Sprintf("(%s) %s %s", e.NodeName, e.CheckDescription, e.Status),
+		Message:  e.Message,
 		Priority: h.Priority,
 	}
 	buf := bytes.NewBuffer(nil)

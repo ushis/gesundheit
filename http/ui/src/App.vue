@@ -13,7 +13,7 @@ const sortedNodes = computed(() => (
 
 const healthy = computed(() => (
   sortedNodes.value.every(([, events]) => (
-    events.every((event) => event.Result.Status === 0)
+    events.every((event) => event.Status === 0)
   ))
 ));
 

@@ -1,8 +1,18 @@
 package check
 
-import "errors"
+import (
+	"errors"
 
-type CheckFunc func(func(interface{}) error) (Check, error)
+	"github.com/ushis/gesundheit/result"
+)
+
+type Database interface {
+	GetEvents() []result.Event
+	GetEventsByNode(name string) []result.Event
+	GetLatestEventByNode(name string) (event result.Event, ok bool)
+}
+
+type CheckFunc func(Database, func(interface{}) error) (Check, error)
 
 type Registry map[string]CheckFunc
 

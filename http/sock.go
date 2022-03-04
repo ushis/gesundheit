@@ -7,7 +7,7 @@ import (
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
-	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 )
 
 type sockPool struct {
@@ -45,7 +45,7 @@ func (p *sockPool) serve(conn net.Conn) {
 	}
 }
 
-func (p *sockPool) broadcast(e check.Event) {
+func (p *sockPool) broadcast(e result.Event) {
 	p.mutex.Lock()
 
 	for _, sock := range p.pool {

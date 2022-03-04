@@ -1,11 +1,12 @@
 package db
 
 import (
-	"github.com/ushis/gesundheit/check"
-	"github.com/ushis/gesundheit/handler"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Database interface {
-	handler.Handler
-	GetEvents() []check.Event
+	Handle(e result.Event) error
+	GetEvents() []result.Event
+	GetEventsByNode(name string) []result.Event
+	GetLatestEventByNode(name string) (event result.Event, ok bool)
 }

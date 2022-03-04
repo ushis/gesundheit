@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net"
 
-	"github.com/ushis/gesundheit/check"
+	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/crypto"
 	"github.com/ushis/gesundheit/handler"
 )
@@ -54,7 +54,7 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 	return Handler{Cipher: cipher, Addr: addr}, nil
 }
 
-func (h Handler) Handle(e check.Event) error {
+func (h Handler) Handle(e result.Event) error {
 	buf := bytes.NewBuffer(nil)
 
 	if err := json.NewEncoder(buf).Encode(e); err != nil {
