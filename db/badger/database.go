@@ -2,7 +2,6 @@ package badger
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"strings"
 	"sync"
@@ -16,7 +15,6 @@ import (
 type Database struct {
 	badger *badger.DB
 	wg     *sync.WaitGroup
-	close  func()
 }
 
 type Opts struct {
@@ -34,32 +32,18 @@ func New(opts Opts) (db.Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, close := context.WithCancel(context.Background())
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
 	go func() {
-		defer wg.Done()
-
-		ticker := time.NewTicker(time.Hour)
-		defer ticker.Stop()
-
-		for {
-			badgerDB.RunValueLogGC(0.5)
-
-			select {
-			case <-ticker.C:
-			case <-ctx.Done():
-				return
-			}
-		}
+		badgerDB.RunValueLogGC(0.5)
+		wg.Done()
 	}()
 
-	return Database{badgerDB, wg, close}, nil
+	return Database{badgerDB, wg}, nil
 }
 
 func (db Database) Close() error {
-	db.close()
 	db.wg.Wait()
 	return db.badger.Close()
 }
