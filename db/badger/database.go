@@ -3,7 +3,6 @@ package badger
 import (
 	"bytes"
 	"encoding/json"
-	"strings"
 	"sync"
 	"time"
 
@@ -117,7 +116,11 @@ func (db Database) GetLatestEventByNode(name string) (e result.Event, ok bool, e
 const pathSep = ":"
 
 func buildKey(path ...string) []byte {
-	return []byte(strings.Join(path, pathSep))
+	if len(path) == 0 {
+		return []byte{}
+	}
+	prefix := buildKeyPrefix(path...)
+	return prefix[:len(prefix)-len(pathSep)]
 }
 
 func buildKeyPrefix(path ...string) []byte {
