@@ -25,6 +25,12 @@ func New(opts Opts) (db.Database, error) {
 	badgerOpts := badger.DefaultOptions(opts.Path)
 	badgerOpts = badgerOpts.WithInMemory(!opts.Persistent)
 	badgerOpts = badgerOpts.WithLoggingLevel(badger.WARNING)
+	// The default value (1 GiB) crashes on low memory systems.
+	// Since we are going to store very small values (< 500 B) a
+	// way lower value is totally fine.
+	// This should propably be configurable, or at least calculated
+	// from the systems total memory.
+	badgerOpts = badgerOpts.WithValueLogFileSize(1 << 21)
 
 	badgerDB, err := badger.Open(badgerOpts)
 
