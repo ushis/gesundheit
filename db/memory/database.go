@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"sync"
 	"time"
 
 	"github.com/ushis/gesundheit/db"
@@ -12,11 +13,12 @@ func init() {
 }
 
 type Database struct {
+	*sync.RWMutex
 	db map[string]map[string]result.Event
 }
 
 func New(_ func(interface{}) error) (db.Database, error) {
-	return Database{make(map[string]map[string]result.Event)}, nil
+	return Database{&sync.RWMutex{}, make(map[string]map[string]result.Event)}, nil
 }
 
 func (db Database) Close() error {
@@ -24,6 +26,9 @@ func (db Database) Close() error {
 }
 
 func (db Database) Handle(e result.Event) error {
+	db.Lock()
+	defer db.Unlock()
+
 	if checks, ok := db.db[e.NodeName]; ok {
 		checks[e.CheckId] = e
 	} else {
@@ -33,6 +38,9 @@ func (db Database) Handle(e result.Event) error {
 }
 
 func (db Database) GetEvents() ([]result.Event, error) {
+	db.RLock()
+	defer db.RUnlock()
+
 	events := []result.Event{}
 
 	for _, checks := range db.db {
@@ -46,6 +54,9 @@ func (db Database) GetEvents() ([]result.Event, error) {
 }
 
 func (db Database) GetEventsByNode(name string) ([]result.Event, error) {
+	db.RLock()
+	defer db.RUnlock()
+
 	checks, ok := db.db[name]
 
 	if !ok {
