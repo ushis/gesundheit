@@ -401,8 +401,8 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     <tr>
       <td><strong>memory</strong></td>
       <td>
-        In memory database suitable for simple setups without
-        persistence requirements
+        In memory database suitable for simple setups and nodes
+        without persistence requirements
       </td>
       <td></td>
       <td></td>
