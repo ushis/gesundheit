@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/ushis/gesundheit/node"
 	"github.com/ushis/gesundheit/result"
 )
@@ -65,6 +66,7 @@ func (r Runner) run(ctx context.Context, events chan<- result.Event) {
 			CheckDescription: r.description,
 			CheckInterval:    checkInterval,
 			StatusHistory:    statusHistory,
+			Id:               uuid.New().String(),
 			Status:           res.Status,
 			Message:          res.Message,
 			Timestamp:        time.Now(),

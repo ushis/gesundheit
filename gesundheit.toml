@@ -1,9 +1,9 @@
 # Dev config. See pkg/gesundheit.toml for reasonable production settings.
 [Database]
-Module = "persistent"
+Module = "redis"
 
 [Database.Config]
-Path = "/tmp/gesundheit.db"
+Address = "127.0.0.1:6379"
 
 [Http]
 Enabled = true
