@@ -27,9 +27,7 @@ func (db Database) Handle(e result.Event) error {
 	if checks, ok := db.db[e.NodeName]; ok {
 		checks[e.CheckId] = e
 	} else {
-		checks = make(map[string]result.Event)
-		checks[e.CheckId] = e
-		db.db[e.NodeName] = checks
+		db.db[e.NodeName] = map[string]result.Event{e.CheckId: e}
 	}
 	return nil
 }
