@@ -27,7 +27,7 @@ import (
 	_ "github.com/ushis/gesundheit/check/tls-cert"
 	"github.com/ushis/gesundheit/crypto"
 	_ "github.com/ushis/gesundheit/db/memory"
-	_ "github.com/ushis/gesundheit/db/persistent"
+	_ "github.com/ushis/gesundheit/db/redis"
 	_ "github.com/ushis/gesundheit/filter/office-hours"
 	_ "github.com/ushis/gesundheit/filter/result-change"
 	_ "github.com/ushis/gesundheit/handler/gotify"

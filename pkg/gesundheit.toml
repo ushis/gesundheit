@@ -3,12 +3,9 @@
 Path = "-"
 Timestamps = false
 
-# Write check results to disk
+# Use a simple in memory database
 [Database]
-Module = "persistent"
-
-[Database.Config]
-Path = "/var/lib/gesundheit/data"
+Module = "memory"
 
 # Enable if you need a pretty web interface
 [Http]

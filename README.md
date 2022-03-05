@@ -385,3 +385,49 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     </tr>
   </tbody>
 </table>
+
+### Databases
+
+<table>
+  <thead>
+    <tr>
+      <th>Module</th>
+      <th>Description</th>
+      <th>Config</th>
+      <th>Config Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>memory</strong></td>
+      <td>
+        In memory database suitable for simple setups without
+        persistence requirements
+      </td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowspan="4"><strong>redis</strong></td>
+      <td rowspan="4"><a href="https://redis.io/">Redis</a> adapter</td>
+      <td>Address</td>
+      <td>Address of the redis server, e.g. <code>127.0.0.1:6379</td>
+    </tr>
+    <tr>
+      <td>DB</td>
+      <td>Redis database to use, e.g. <code>0</code></td>
+    </tr>
+    <tr>
+      <td>Username</td>
+      <td>
+        Redis username, e.g. <code>"gesundheit"</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Password</td>
+      <td>
+        Redis password, e.g. <code>"secret"</code>
+      </td>
+    </tr>
+  </tbody>
+</table>

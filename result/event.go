@@ -8,6 +8,7 @@ type Event struct {
 	CheckDescription string
 	CheckInterval    uint64
 	StatusHistory    StatusHistory
+	Id               string
 	Status           Status
 	Message          string
 	Timestamp        time.Time
