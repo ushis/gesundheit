@@ -67,7 +67,7 @@ func (db Database) GetLatestEventByNode(name string) (event result.Event, ok boo
 	events, _ := db.GetEventsByNode(name)
 
 	if len(events) == 0 {
-		return event, false, err
+		return event, false, nil
 	}
 	event = events[0]
 

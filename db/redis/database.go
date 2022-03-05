@@ -25,10 +25,10 @@ func init() {
 
 // Database Layout
 //
-// nodes 													set<nodename>
-// nodes:<nodename>:events				hash<checkId, eventId>
-// nodes:<nodename>:events:latest	<eventId>
-// events:<eventId> 							<event>
+// nodes                          set<nodeName>
+// nodes:<nodename>:events        hash<checkId, eventId>
+// nodes:<nodename>:events:latest eventId
+// events:<eventId>               event
 //
 func New(configure func(interface{}) error) (db.Database, error) {
 	conf := Config{}
@@ -55,7 +55,7 @@ func (db Database) Close() error {
 // vals: event, ttl
 //
 const scriptStoreEvent = `
-	redis.call('set', 'events:' .. KEYS[3], ARGV[1], 'EX', ARGV[2])
+	redis.call('set', 'events:' .. KEYS[3], ARGV[1], 'ex', ARGV[2])
 	redis.call('hset', 'nodes:' .. KEYS[1] .. ':events', KEYS[2], KEYS[3])
 	redis.call('set', 'nodes:' .. KEYS[1] .. ':events:latest', KEYS[3])
 	redis.call('sadd', 'nodes', KEYS[1])
