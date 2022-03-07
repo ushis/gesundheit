@@ -1,5 +1,6 @@
 <script setup lang="ts">
-function enter(el: HTMLElement) {
+function enter(elem: Element) {
+  const el = elem as HTMLElement;
   const { height } = getComputedStyle(el);
 
   requestAnimationFrame(() => {
@@ -11,7 +12,8 @@ function enter(el: HTMLElement) {
   })
 }
 
-function leave(el: HTMLElement) {
+function leave(elem: Element) {
+  const el = elem as HTMLElement;
   const { height } = getComputedStyle(el);
 
   requestAnimationFrame(() => {
@@ -23,7 +25,8 @@ function leave(el: HTMLElement) {
   })
 }
 
-function after(el: HTMLElement) {
+function after(elem: Element) {
+  const el = elem as HTMLElement;
   el.style.height = '';
 }
 </script>
