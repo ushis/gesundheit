@@ -21,6 +21,10 @@ watch(healthy, (healthy) => {
   if (!healthy) isOpen.value = true;
 });
 
+watch(() => props.forceOpen, (forceOpen) => {
+  if (forceOpen) isOpen.value = true;
+});
+
 const sortedEvents = computed(() => (
   [...props.events].sort((a, b) => {
     if (a.Status < b.Status) return 1;
