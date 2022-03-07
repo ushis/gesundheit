@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { EventData } from '../gesundheit'
 import Dot from './Dot.vue';
 import TimeAgo from './TimeAgo.vue';
+import Card from './Card.vue';
 
 const props = defineProps<{ event: EventData }>();
 const healthy = computed(() => props.event.Status === 0);
@@ -14,11 +15,8 @@ watch(healthy, (healthy) => {
 </script>
 
 <template>
-  <div class="card">
-    <div
-      class="card-header d-flex align-items-center"
-      @click="isOpen = !isOpen"
-    >
+  <Card v-model:is-open="isOpen">
+    <template #header>
       <Dot
         :pulse="!healthy"
         :danger="!healthy"
@@ -31,18 +29,9 @@ watch(healthy, (healthy) => {
         :timestamp="event.Timestamp"
         class="text-truncate d-none d-sm-block"
       />
-    </div>
-    <div
-      class="card-body"
-      :class="{ 'd-none': !isOpen }"
-    >
+    </template>
+    <template #body>
       <code class="text-dark">{{ event.Message }}</code>
-    </div>
-  </div>
+    </template>
+  </Card>
 </template>
-
-<style scoped lang="scss">
-.card-header {
-  cursor: pointer;
-}
-</style>

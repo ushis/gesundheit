@@ -2,7 +2,7 @@
 import { ref, computed, onBeforeMount } from 'vue'
 import { EventData, EventStream } from './gesundheit';
 import Dot from './components/Dot.vue';
-import Node from './components/Node.vue';
+import NodeCard from './components/NodeCard.vue';
 
 const nodes = ref(new Map() as Map<string, Array<EventData>>);
 
@@ -46,12 +46,13 @@ onBeforeMount(() => stream.connect());
     </div>
   </nav>
   <div class="container py-4">
-    <Node
+    <NodeCard
       v-for="([name, events]) in sortedNodes"
       :key="name"
       :name="name"
       :events="events"
-      class="mb-4"
+      :force-open="sortedNodes.length === 1"
+      class="mb-3"
     />
   </div>
 </template>

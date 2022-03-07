@@ -1,10 +1,4 @@
 # Dev config. See pkg/gesundheit.toml for reasonable production settings.
-[Database]
-Module = "redis"
-
-[Database.Config]
-Address = "127.0.0.1:6379"
-
 [Http]
 Enabled = true
 Listen = ":8080"

@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { EventData } from '../gesundheit'
-import Event from './Event.vue';
+import EventCard from './EventCard.vue';
 import Dot from './Dot.vue';
+import Card from './Card.vue';
 
 const props = defineProps<{
   name: string,
   events: Array<EventData>,
+  forceOpen: boolean,
 }>()
 
 const healthy = computed(() => (
   props.events.every((event) => event.Status === 0)
 ));
+
+const isOpen = ref(!healthy.value || props.forceOpen);
+
+watch(healthy, (healthy) => {
+  if (!healthy) isOpen.value = true;
+});
 
 const sortedEvents = computed(() => (
   [...props.events].sort((a, b) => {
@@ -23,25 +31,26 @@ const sortedEvents = computed(() => (
 </script>
 
 <template>
-  <div class="card">
-    <div class="card-header d-flex align-items-center">
+  <Card v-model:is-open="isOpen">
+    <template #header>
       <Dot
         :pulse="!healthy"
         :danger="!healthy"
         class="flex-shrink-0 me-3"
       />
-      <div>{{ name }}</div>
-    </div>
-
-    <div class="card-body">
-      <Event
+      <div class="me-auto">
+        {{ name }}
+      </div>
+    </template>
+    <template #body>
+      <EventCard
         v-for="event in sortedEvents"
         :key="event.CheckId"
         :event="event"
         class="event mb-2"
       />
-    </div>
-  </div>
+    </template>
+  </Card>
 </template>
 
 <style lang="scss" scoped>
