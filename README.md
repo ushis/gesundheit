@@ -143,6 +143,19 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>Min available space considered healthy, e.g. <code>"1G"</code></td>
     </tr>
     <tr>
+      <td rowspan="2"><strong>exec</strong></td>
+      <td rowspan="2">Execute check command</td>
+      <td>Command</td>
+      <td>
+        Command to execute, e.g.
+        <code>"/usr/lib/nagios-plugins/check_load"</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Args</td>
+      <td>Command arguments, e.g. <code>["-w", "2", "-c", "3"]</code></td>
+    </tr>
+    <tr>
       <td rowspan="2"><strong>file-mtime</strong></td>
       <td rowspan="2">Check mtime of a file</td>
       <td>Path</td>

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	_ "github.com/ushis/gesundheit/check/disk-space"
+	_ "github.com/ushis/gesundheit/check/exec"
 	_ "github.com/ushis/gesundheit/check/file-mtime"
 	_ "github.com/ushis/gesundheit/check/file-presence"
 	_ "github.com/ushis/gesundheit/check/heartbeat"
