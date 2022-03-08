@@ -1,57 +1,52 @@
 <script setup lang="ts">
-import { ref, computed, onBeforeMount } from 'vue'
+import { ref, computed, onBeforeMount } from 'vue';
 import { EventData, EventStream } from './gesundheit';
-import Dot from './components/Dot.vue';
-import Node from './components/Node.vue';
+import { groupBy } from './util';
+import NavBar from './components/NavBar.vue';
+import NodeCard from './components/NodeCard.vue';
 
-const nodes = ref(new Map() as Map<string, Array<EventData>>);
+const filter = ref('');
+const events = ref([] as Array<EventData>);
 
-const sortedNodes = computed(() => (
-  Array.from(nodes.value.entries())
+const eventsByNode = computed(() => (
+  groupBy(events.value, (e) => e.NodeName)
     .sort(([a], [b]) => a.localeCompare(b))
 ));
 
 const healthy = computed(() => (
-  sortedNodes.value.every(([, events]) => (
-    events.every((event) => event.Status === 0)
-  ))
+  events.value.every((event) => event.Status === 0)
 ));
 
 const stream = new EventStream((event) => {
-  let events = nodes.value.get(event.NodeName);
+  const i = events.value.findIndex((e) => (
+    e.NodeName === event.NodeName &&
+      e.CheckId === event.CheckId
+  ));
 
-  if (events === undefined) {
-    events = [event];
+  if (i < 0) {
+    events.value.push(event);
   } else {
-    events = events.filter((e) => e.CheckId !== event.CheckId);
-    events.push(event);
+    events.value[i] = event;
   }
-  nodes.value.set(event.NodeName, events);
 });
 
 onBeforeMount(() => stream.connect());
 </script>
 
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container">
-      <div class="navbar-brand">
-        <Dot
-          :danger="!healthy"
-          :pulse="!healthy"
-          class="me-3"
-        />
-        <span>gesundheit</span>
-      </div>
-    </div>
-  </nav>
+  <NavBar
+    v-model:filter="filter"
+    :is-healthy="healthy"
+  />
   <div class="container py-4">
-    <Node
-      v-for="([name, events]) in sortedNodes"
-      :key="name"
-      :name="name"
-      :events="events"
-      class="mb-4"
+    <NodeCard
+      v-for="([nodeName, nodeEvents]) in eventsByNode"
+      :key="nodeName"
+      :name="nodeName"
+      :events="nodeEvents"
+      :filter="filter"
+      :is-open="eventsByNode.length === 1"
+      class="mb-3"
     />
   </div>
 </template>

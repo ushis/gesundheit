@@ -10,17 +10,20 @@ export interface EventData {
 
 export class EventStream {
   static EVENTS_ENDPOINT = '/api/events';
+
   static SOCKET_ENDPOINT = '/api/events/socket';
 
   static get SOCKET_URL(): string {
-    const url = new URL(location.toString());
+    const url = new URL(window.location.toString());
     url.pathname = EventStream.SOCKET_ENDPOINT;
-    url.protocol = (location.protocol === 'https:') ? 'wss:' : 'ws:';
+    url.protocol = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
     return url.toString();
   }
 
   private ws: WebSocket | null;
+
   private heartbeat: number | null;
+
   private handler: (event: EventData) => void;
 
   constructor(handler: (event: EventData) => void) {
@@ -37,9 +40,9 @@ export class EventStream {
     this.ws.addEventListener('error', () => this.reconnect());
     this.ws.addEventListener('message', (e) => this.handleMessage(e.data));
 
-    if (this.heartbeat === null)
+    if (this.heartbeat === null) {
       this.heartbeat = setInterval(() => this.sendHeartbeat(), 25_000);
-
+    }
     this.fetchEvents();
   }
 
@@ -59,7 +62,7 @@ export class EventStream {
   }
 
   private get isConnecting(): boolean {
-    return this.ws?.readyState === WebSocket.CONNECTING
+    return this.ws?.readyState === WebSocket.CONNECTING;
   }
 
   private get isOpen(): boolean {

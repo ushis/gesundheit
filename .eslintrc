@@ -5,6 +5,7 @@
     "@vue/typescript/recommended"
   ],
   "globals": {
+    "defineEmits": "readonly",
     "defineProps": "readonly",
     "withDefaults": "readonly"
   }
