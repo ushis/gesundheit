@@ -38,7 +38,7 @@ onBeforeMount(() => stream.connect());
     v-model:filter="filter"
     :is-healthy="healthy"
   />
-  <div class="container py-4">
+  <div class="container py-3">
     <NodeCard
       v-for="([nodeName, nodeEvents]) in eventsByNode"
       :key="nodeName"
