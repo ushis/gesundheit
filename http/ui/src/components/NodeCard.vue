@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { EventData } from '../gesundheit'
+import { EventData } from '../gesundheit';
 import EventCard from './EventCard.vue';
 import Dot from './Dot.vue';
 import Card from './Card.vue';
@@ -9,7 +9,7 @@ const props = defineProps<{
   name: string,
   events: Array<EventData>,
   forceOpen: boolean,
-}>()
+}>();
 
 const healthy = computed(() => (
   props.events.every((event) => event.Status === 0)
@@ -17,8 +17,8 @@ const healthy = computed(() => (
 
 const isOpen = ref(!healthy.value || props.forceOpen);
 
-watch(healthy, (healthy) => {
-  if (!healthy) isOpen.value = true;
+watch(healthy, () => {
+  if (!healthy.value) isOpen.value = true;
 });
 
 watch(() => props.forceOpen, (forceOpen) => {
@@ -31,7 +31,7 @@ const sortedEvents = computed(() => (
     if (a.Status > b.Status) return -1;
     return b.Timestamp.localeCompare(a.Timestamp);
   })
-))
+));
 </script>
 
 <template>

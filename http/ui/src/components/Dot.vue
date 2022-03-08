@@ -5,7 +5,7 @@ withDefaults(defineProps<{
 }>(), {
   pulse: false,
   danger: false,
-})
+});
 </script>
 
 <template>

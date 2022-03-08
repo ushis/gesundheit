@@ -9,7 +9,7 @@ function enter(elem: Element) {
     requestAnimationFrame(() => {
       el.style.height = height;
     });
-  })
+  });
 }
 
 function leave(elem: Element) {
@@ -22,7 +22,7 @@ function leave(elem: Element) {
     requestAnimationFrame(() => {
       el.style.height = '0';
     });
-  })
+  });
 }
 
 function after(elem: Element) {

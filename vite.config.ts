@@ -8,10 +8,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/': {
-        target: 'http://localhost:8080',
+        target: 'http://angerpi:9876',
       },
       '/api/events/socket': {
-        target: 'ws://localhost:8080',
+        target: 'ws://angerpi:9876',
         ws: true,
       },
     }

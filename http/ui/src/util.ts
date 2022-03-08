@@ -5,7 +5,7 @@ export function groupBy<K, V>(arr: Array<V>, fn: (v: V) => K): Array<[K, Array<V
     group.push(value);
     map.set(key, group);
     return map;
-  }, new Map as Map<K, Array<V>>);
+  }, new Map() as Map<K, Array<V>>);
 
   return Array.from(groups.entries());
 }

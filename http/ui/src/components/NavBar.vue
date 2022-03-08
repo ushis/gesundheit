@@ -18,15 +18,17 @@ const onFilterInput = (e: Event) => {
 const menu = ref<HTMLElement | null>(null);
 const menuOpen = ref(false);
 
-// quite funny integration of the bootstrap collapse animation...
-const openMenu = (el: HTMLElement) => {
-  // remove "display: none" and calculate target height
+const openMenu = () => {
+  if (menu.value === null) return;
+
+  const el = menu.value;
   el.classList.add('show');
   const { height } = getComputedStyle(el);
 
   requestAnimationFrame(() => {
-    // set "height: 0" and "transition: height"
-    el.classList.add('collapsing');
+    el.style.height = '0';
+    el.style.overflow = 'hidden';
+    el.style.transition = 'height 0.2s';
 
     requestAnimationFrame(() => {
       el.style.height = height;
@@ -34,37 +36,41 @@ const openMenu = (el: HTMLElement) => {
   });
 
   el.addEventListener('transitionend', () => {
-    el.classList.remove('collapsing');
     el.style.height = '';
+    el.style.overflow = '';
+    el.style.transition = '';
   }, { once: true });
 };
 
-const closeMenu = (el: HTMLElement) => {
+const closeMenu = () => {
+  if (menu.value === null) return;
+
+  const el = menu.value;
   const { height } = getComputedStyle(el);
 
   requestAnimationFrame(() => {
     el.style.height = height;
+    el.style.overflow = 'hidden';
+    el.style.transition = 'height 0.2s';
 
     requestAnimationFrame(() => {
-      // set "height: 0" and "transition: height"
-      el.classList.add('collapsing');
-      el.style.height = '';
+      el.style.height = '0';
     });
   });
 
   el.addEventListener('transitionend', () => {
-    el.classList.remove('collapsing');
+    el.style.height = '';
+    el.style.overflow = '';
+    el.style.transition = '';
     el.classList.remove('show');
   }, { once: true });
 };
 
 watch(menuOpen, () => {
-  if (menu.value === null) return;
-
   if (menuOpen.value) {
-    openMenu(menu.value)
+    openMenu();
   } else {
-    closeMenu(menu.value);
+    closeMenu();
   }
 });
 </script>

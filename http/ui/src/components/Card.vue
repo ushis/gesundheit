@@ -2,8 +2,13 @@
 import ExpandTransition from './ExpandTransition.vue';
 import Chevron from './Chevron.vue';
 
-const props = defineProps<{ isOpen: boolean }>()
-const emit = defineEmits<{ (event: 'update:isOpen', isOpen: boolean): void }>();
+const props = defineProps<{
+  isOpen: boolean,
+}>();
+
+const emit = defineEmits<{
+  (event: 'update:isOpen', isOpen: boolean): void,
+}>();
 </script>
 
 <template>
