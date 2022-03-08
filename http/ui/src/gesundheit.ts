@@ -10,7 +10,6 @@ export interface EventData {
 
 export class EventStream {
   static EVENTS_ENDPOINT = '/api/events';
-
   static SOCKET_ENDPOINT = '/api/events/socket';
 
   static get SOCKET_URL(): string {
@@ -21,9 +20,7 @@ export class EventStream {
   }
 
   private ws: WebSocket | null;
-
   private heartbeat: number | null;
-
   private handler: (event: EventData) => void;
 
   constructor(handler: (event: EventData) => void) {

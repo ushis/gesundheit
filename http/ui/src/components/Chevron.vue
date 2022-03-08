@@ -12,7 +12,7 @@ const props = defineProps<{ up: boolean }>();
   >
     <path
       fill="currentColor"
-      d="M 0 3 L6 9 L 12 3 L 10 3 L 6 7 L 2 3"
+      d="M 0 3 L 6 9 L 12 3 L 10 3 L 6 7 L 2 3"
     />
   </svg>
 </template>
