@@ -1,25 +1,20 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { computed } from 'vue';
 import { EventData } from '../gesundheit';
 import Dot from './Dot.vue';
 import TimeAgo from './TimeAgo.vue';
 import Card from './Card.vue';
 
 const props = defineProps<{ event: EventData }>();
-const healthy = computed(() => props.event.Status === 0);
-const isOpen = ref(!healthy.value);
-
-watch(healthy, () => {
-  if (!healthy.value) isOpen.value = true;
-});
+const isHealthy = computed(() => props.event.Status === 0);
 </script>
 
 <template>
-  <Card v-model:is-open="isOpen">
+  <Card :is-open="!isHealthy">
     <template #header>
       <Dot
-        :pulse="!healthy"
-        :danger="!healthy"
+        :pulse="!isHealthy"
+        :danger="!isHealthy"
         class="flex-shrink-0 me-3"
       />
       <div class="me-auto">

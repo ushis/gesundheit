@@ -56,7 +56,7 @@ onBeforeMount(() => stream.connect());
       :key="nodeName"
       :name="nodeName"
       :events="events"
-      :force-open="normalFilter !== '' || eventsByNode.length === 1"
+      :is-open="normalFilter !== '' || eventsByNode.length === 1"
       class="mb-3"
     />
   </div>

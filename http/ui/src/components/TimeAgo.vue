@@ -19,7 +19,7 @@ function updateformattedTimestamp(): void {
   formattedTimestamp.value = formatTimestamp(props.timestamp);
 }
 
-watch(props, updateformattedTimestamp, { immediate: true });
+watch(() => props.timestamp, updateformattedTimestamp, { immediate: true });
 
 let updateFormattedTimestampInterval: number;
 

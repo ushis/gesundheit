@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { computed } from 'vue';
 import { EventData } from '../gesundheit';
 import EventCard from './EventCard.vue';
 import Dot from './Dot.vue';
@@ -8,22 +8,16 @@ import Card from './Card.vue';
 const props = defineProps<{
   name: string,
   events: Array<EventData>,
-  forceOpen: boolean,
+  isOpen: boolean,
 }>();
 
-const healthy = computed(() => (
+const isHealthy = computed(() => (
   props.events.every((event) => event.Status === 0)
 ));
 
-const isOpen = ref(!healthy.value || props.forceOpen);
-
-watch(healthy, () => {
-  if (!healthy.value) isOpen.value = true;
-});
-
-watch(() => props.forceOpen, (forceOpen) => {
-  if (forceOpen) isOpen.value = true;
-});
+const isOpen = computed(() => (
+  !isHealthy.value || props.isOpen
+));
 
 const sortedEvents = computed(() => (
   [...props.events].sort((a, b) => {
@@ -35,11 +29,11 @@ const sortedEvents = computed(() => (
 </script>
 
 <template>
-  <Card v-model:is-open="isOpen">
+  <Card :is-open="isOpen">
     <template #header>
       <Dot
-        :pulse="!healthy"
-        :danger="!healthy"
+        :pulse="!isHealthy"
+        :danger="!isHealthy"
         class="flex-shrink-0 me-3"
       />
       <div class="me-auto">

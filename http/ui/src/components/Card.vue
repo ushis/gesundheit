@@ -1,31 +1,41 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue';
 import ExpandTransition from './ExpandTransition.vue';
 import Chevron from './Chevron.vue';
 
-const props = defineProps<{
-  isOpen: boolean,
-}>();
+const props = defineProps<{ isOpen: boolean }>();
+const isReallyOpen = ref(props.isOpen);
+const isOpenedByUser = ref(false);
 
-const emit = defineEmits<{
-  (event: 'update:isOpen', isOpen: boolean): void,
-}>();
+const onHeaderClick = () => {
+  isReallyOpen.value = !isReallyOpen.value;
+  isOpenedByUser.value = isReallyOpen.value;
+};
+
+watch(() => props.isOpen, () => {
+  if (props.isOpen) {
+    isReallyOpen.value = true;
+  } else if (!isOpenedByUser.value) {
+    isReallyOpen.value = false;
+  }
+});
 </script>
 
 <template>
   <div class="card">
     <div
       class="card-header d-flex align-items-center"
-      @click.prevent="emit('update:isOpen', !props.isOpen)"
+      @click.prevent="onHeaderClick"
     >
       <slot name="header" />
       <Chevron
         class="flex-shrink-0 ms-3"
-        :up="props.isOpen"
+        :up="isReallyOpen"
       />
     </div>
 
     <ExpandTransition>
-      <div v-show="props.isOpen">
+      <div v-show="isReallyOpen">
         <div class="card-body">
           <slot name="body" />
         </div>
