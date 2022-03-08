@@ -12,17 +12,20 @@ const emit = defineEmits<{
 }>();
 
 const onFilterInput = (e: Event) => {
-  emit('update:filter', (e.target as HTMLInputElement).value)
+  emit('update:filter', (e.target as HTMLInputElement).value);
 };
 
 const menu = ref<HTMLElement | null>(null);
 const menuOpen = ref(false);
 
+// quite funny integration of the bootstrap collapse animation...
 const openMenu = (el: HTMLElement) => {
+  // remove "display: none" and calculate target height
   el.classList.add('show');
   const { height } = getComputedStyle(el);
 
   requestAnimationFrame(() => {
+    // set "height: 0" and "transition: height"
     el.classList.add('collapsing');
 
     requestAnimationFrame(() => {
@@ -43,6 +46,7 @@ const closeMenu = (el: HTMLElement) => {
     el.style.height = height;
 
     requestAnimationFrame(() => {
+      // set "height: 0" and "transition: height"
       el.classList.add('collapsing');
       el.style.height = '';
     });

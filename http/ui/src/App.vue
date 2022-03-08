@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeMount } from 'vue';
 import { EventData, EventStream } from './gesundheit';
+import { groupBy } from './util';
 import NavBar from './components/NavBar.vue';
-import Dot from './components/Dot.vue';
 import NodeCard from './components/NodeCard.vue';
 
 const allEvents = ref([] as Array<EventData>);
 const filter = ref('');
-const navOpen = ref(false);
 
 const normalFilter = computed(() => (
   filter.value.trim().toLocaleLowerCase()
@@ -21,18 +20,10 @@ const filteredEvents = computed(() => {
   ));
 });
 
-const eventsByNode = computed(() => {
-  const groups = filteredEvents.value.reduce((groups, e) => {
-    const group = groups.get(e.NodeName) || [];
-    group.push(e);
-    groups.set(e.NodeName, group);
-    return groups;
-  }, new Map() as Map<string, Array<EventData>>)
-
-  return Array
-    .from(groups.entries())
+const eventsByNode = computed(() => (
+  groupBy(filteredEvents.value, (e) => e.NodeName)
     .sort(([a], [b]) => a.localeCompare(b))
-});
+));
 
 const healthy = computed(() => (
   allEvents.value.every((event) => event.Status === 0)
