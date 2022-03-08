@@ -25,16 +25,23 @@ func (db Database) Close() error {
 	return nil
 }
 
-func (db Database) Handle(e result.Event) error {
+func (db Database) InsertEvent(e result.Event) (bool, error) {
 	db.Lock()
 	defer db.Unlock()
 
-	if checks, ok := db.db[e.NodeName]; ok {
-		checks[e.CheckId] = e
-	} else {
+	checks, ok := db.db[e.NodeName]
+
+	if !ok {
 		db.db[e.NodeName] = map[string]result.Event{e.CheckId: e}
+		return true, nil
 	}
-	return nil
+	prevE, ok := checks[e.CheckId]
+
+	if !ok || prevE.Id != e.Id {
+		checks[e.CheckId] = e
+		return true, nil
+	}
+	return false, nil
 }
 
 func (db Database) GetEvents() ([]result.Event, error) {

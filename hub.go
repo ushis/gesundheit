@@ -6,12 +6,14 @@ import (
 	"sync"
 
 	"github.com/ushis/gesundheit/check"
-	"github.com/ushis/gesundheit/result"
+	"github.com/ushis/gesundheit/db"
 	"github.com/ushis/gesundheit/handler"
 	"github.com/ushis/gesundheit/input"
+	"github.com/ushis/gesundheit/result"
 )
 
 type hub struct {
+	db           db.Database
 	checkRunners []check.Runner
 	inputRunners []input.Runner
 	handlers     []handler.Handler
@@ -74,6 +76,12 @@ func (h *hub) runRunners(ctx context.Context, wg *sync.WaitGroup, events chan<- 
 }
 
 func (h *hub) dispatch(e result.Event) {
+	if ok, err := h.db.InsertEvent(e); err != nil {
+		log.Println(err)
+	} else if !ok {
+		return
+	}
+
 	for _, r := range h.handlers {
 		if err := r.Handle(e); err != nil {
 			log.Println(err)
