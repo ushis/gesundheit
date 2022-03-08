@@ -6,7 +6,7 @@ import (
 
 type Database interface {
 	Close() error
-	Handle(e result.Event) error
+	InsertEvent(e result.Event) (bool, error)
 	GetEvents() ([]result.Event, error)
 	GetEventsByNode(name string) ([]result.Event, error)
 	GetLatestEventByNode(name string) (event result.Event, ok bool, err error)

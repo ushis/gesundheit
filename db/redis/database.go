@@ -55,23 +55,25 @@ func (db Database) Close() error {
 // vals: event, ttl
 //
 const scriptStoreEvent = `
+	if redis.call('exists', 'events:' .. KEYS[3]) > 0 then return 0 end
 	redis.call('set', 'events:' .. KEYS[3], ARGV[1], 'ex', ARGV[2])
 	redis.call('hset', 'nodes:' .. KEYS[1] .. ':events', KEYS[2], KEYS[3])
 	redis.call('set', 'nodes:' .. KEYS[1] .. ':events:latest', KEYS[3])
 	redis.call('sadd', 'nodes', KEYS[1])
-	return true
+	return 1
 `
 
-func (db Database) Handle(e result.Event) error {
+func (db Database) InsertEvent(e result.Event) (bool, error) {
 	val, err := json.Marshal(e)
 
 	if err != nil {
-		return err
+		return false, err
 	}
 	ttl := 2 * e.CheckInterval
 	keys := []string{e.NodeName, e.CheckId, e.Id}
 	vals := []interface{}{val, ttl}
-	return db.rdb.Eval(db.rdb.Context(), scriptStoreEvent, keys, vals...).Err()
+	res, err := db.rdb.Eval(db.rdb.Context(), scriptStoreEvent, keys, vals...).Int()
+	return res == 1, err
 }
 
 // retreive events

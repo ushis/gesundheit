@@ -105,8 +105,7 @@ func cmdServe(args []string) {
 	if conf.Log.Timestamps {
 		log.SetFlags(log.Ldate | log.Ltime)
 	}
-	h := &hub{}
-	h.registerHandler(db)
+	h := &hub{db: db}
 
 	confDir := filepath.Dir(confPath)
 	modConfs := filepath.Join(confDir, conf.Modules.Config)
