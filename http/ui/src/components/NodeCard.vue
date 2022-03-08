@@ -21,7 +21,7 @@ const normalFilter = computed(() => (
 ));
 
 const isOpen = computed(() => (
-  !isHealthy.value || props.isOpen || normalFilter.value !== ''
+  !isHealthy.value || normalFilter.value !== '' || props.isOpen
 ));
 
 const filteredEvents = computed(() => {
