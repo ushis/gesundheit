@@ -13,7 +13,7 @@ const eventsByNode = computed(() => (
     .sort(([a], [b]) => a.localeCompare(b))
 ));
 
-const healthy = computed(() => (
+const isHealthy = computed(() => (
   events.value.every((event) => event.Status === 0)
 ));
 
@@ -36,7 +36,7 @@ onBeforeMount(() => stream.connect());
 <template>
   <NavBar
     v-model:filter="filter"
-    :is-healthy="healthy"
+    :is-healthy="isHealthy"
   />
   <div class="container py-3">
     <NodeCard
