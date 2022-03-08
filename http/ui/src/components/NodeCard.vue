@@ -8,6 +8,7 @@ import Card from './Card.vue';
 const props = defineProps<{
   name: string,
   events: Array<EventData>,
+  filter: string,
   isOpen: boolean,
 }>();
 
@@ -15,12 +16,24 @@ const isHealthy = computed(() => (
   props.events.every((event) => event.Status === 0)
 ));
 
-const isOpen = computed(() => (
-  !isHealthy.value || props.isOpen
+const normalFilter = computed(() => (
+  props.filter.trim().toLocaleLowerCase()
 ));
 
+const isOpen = computed(() => (
+  !isHealthy.value || props.isOpen || normalFilter.value !== ''
+));
+
+const filteredEvents = computed(() => {
+  if (normalFilter.value === '') return props.events;
+
+  return props.events.filter((e) => (
+    e.CheckDescription.toLocaleLowerCase().includes(normalFilter.value)
+  ));
+});
+
 const sortedEvents = computed(() => (
-  [...props.events].sort((a, b) => {
+  [...filteredEvents.value].sort((a, b) => {
     if (a.Status < b.Status) return 1;
     if (a.Status > b.Status) return -1;
     return b.Timestamp.localeCompare(a.Timestamp);
@@ -29,7 +42,10 @@ const sortedEvents = computed(() => (
 </script>
 
 <template>
-  <Card :is-open="isOpen">
+  <Card
+    v-show="sortedEvents.length > 0"
+    :is-open="isOpen"
+  >
     <template #header>
       <Dot
         :pulse="!isHealthy"

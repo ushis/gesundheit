@@ -5,40 +5,28 @@ import { groupBy } from './util';
 import NavBar from './components/NavBar.vue';
 import NodeCard from './components/NodeCard.vue';
 
-const allEvents = ref([] as Array<EventData>);
 const filter = ref('');
-
-const normalFilter = computed(() => (
-  filter.value.trim().toLocaleLowerCase()
-));
-
-const filteredEvents = computed(() => {
-  if (normalFilter.value === '') return allEvents.value;
-
-  return allEvents.value.filter((e) => (
-    e.CheckDescription.toLocaleLowerCase().includes(normalFilter.value)
-  ));
-});
+const events = ref([] as Array<EventData>);
 
 const eventsByNode = computed(() => (
-  groupBy(filteredEvents.value, (e) => e.NodeName)
+  groupBy(events.value, (e) => e.NodeName)
     .sort(([a], [b]) => a.localeCompare(b))
 ));
 
 const healthy = computed(() => (
-  allEvents.value.every((event) => event.Status === 0)
+  events.value.every((event) => event.Status === 0)
 ));
 
 const stream = new EventStream((event) => {
-  const i = allEvents.value.findIndex((e) => (
+  const i = events.value.findIndex((e) => (
     e.NodeName === event.NodeName &&
       e.CheckId === event.CheckId
   ));
 
   if (i < 0) {
-    allEvents.value.push(event);
+    events.value.push(event);
   } else {
-    allEvents.value[i] = event;
+    events.value[i] = event;
   }
 });
 
@@ -52,11 +40,12 @@ onBeforeMount(() => stream.connect());
   />
   <div class="container py-4">
     <NodeCard
-      v-for="([nodeName, events]) in eventsByNode"
+      v-for="([nodeName, nodeEvents]) in eventsByNode"
       :key="nodeName"
       :name="nodeName"
-      :events="events"
-      :is-open="normalFilter !== '' || eventsByNode.length === 1"
+      :events="nodeEvents"
+      :filter="filter"
+      :is-open="eventsByNode.length === 1"
       class="mb-3"
     />
   </div>
