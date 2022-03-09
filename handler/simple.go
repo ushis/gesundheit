@@ -11,15 +11,11 @@ type Simple interface {
 	Handle(result.Event) error
 }
 
-func Wrap(s Simple) Handler {
-	return wrapper{s}
-}
-
-type wrapper struct {
+type simpleWrapper struct {
 	Simple
 }
 
-func (w wrapper) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
+func (w simpleWrapper) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 	chn := make(chan result.Event)
 	wg.Add(1)
 
@@ -31,7 +27,7 @@ func (w wrapper) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 	return chn, nil
 }
 
-func (w wrapper) run(chn <-chan result.Event) {
+func (w simpleWrapper) run(chn <-chan result.Event) {
 	for e := range chn {
 		if err := w.Handle(e); err != nil {
 			log.Println(e)

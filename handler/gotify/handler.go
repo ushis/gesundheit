@@ -19,10 +19,10 @@ type Handler struct {
 }
 
 func init() {
-	handler.Register("gotify", New)
+	handler.RegisterSimple("gotify", New)
 }
 
-func New(configure func(interface{}) error) (handler.Handler, error) {
+func New(configure func(interface{}) error) (handler.Simple, error) {
 	h := Handler{Priority: 4}
 
 	if err := configure(&h); err != nil {
@@ -35,7 +35,7 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 	}
 	url.Path = "/message"
 	h.Url = url.String()
-	return handler.Wrap(h), nil
+	return h, nil
 }
 
 type Message struct {

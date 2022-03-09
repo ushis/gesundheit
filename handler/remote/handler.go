@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	handler.Register("remote", New)
+	handler.RegisterSimple("remote", New)
 }
 
 type Handler struct {
@@ -25,7 +25,7 @@ type Config struct {
 	Address    string
 }
 
-func New(configure func(interface{}) error) (handler.Handler, error) {
+func New(configure func(interface{}) error) (handler.Simple, error) {
 	conf := Config{}
 
 	if err := configure(&conf); err != nil {
@@ -51,7 +51,7 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return handler.Wrap(Handler{Cipher: cipher, Addr: addr}), nil
+	return Handler{Cipher: cipher, Addr: addr}, nil
 }
 
 func (h Handler) Handle(e result.Event) error {
