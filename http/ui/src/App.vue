@@ -2,7 +2,7 @@
 import { ref, computed, onBeforeMount } from 'vue';
 import { EventData, EventStream } from './gesundheit';
 import { groupBy } from './util';
-import NavBar from './components/NavBar.vue';
+import Navbar from './components/Navbar.vue';
 import NodeCard from './components/NodeCard.vue';
 
 const filter = ref('');
@@ -34,7 +34,7 @@ onBeforeMount(() => stream.connect());
 </script>
 
 <template>
-  <NavBar
+  <Navbar
     v-model:filter="filter"
     :is-healthy="isHealthy"
   />

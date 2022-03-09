@@ -96,10 +96,7 @@ watch(menuOpen, () => {
         ref="menu"
         class="collapse navbar-collapse"
       >
-        <form
-          class="ms-auto pt-2"
-          @submit.prevent
-        >
+        <div class="ms-auto pt-2 pt-lg-0">
           <input
             :value="props.filter"
             class="form-control"
@@ -107,7 +104,7 @@ watch(menuOpen, () => {
             placeholder="Search..."
             @input="onFilterInput"
           >
-        </form>
+        </div>
       </div>
     </div>
   </nav>
