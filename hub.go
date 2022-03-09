@@ -32,12 +32,12 @@ func (h *hub) registerConsumer(c consumer) {
 }
 
 func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancelProds := context.WithCancel(ctx)
 	prodsWg := sync.WaitGroup{}
 	in, err := h.runProducers(ctx, &prodsWg)
 
 	if err != nil {
-		cancel()
+		cancelProds()
 		prodsWg.Wait()
 		close(in)
 		return err
@@ -46,7 +46,7 @@ func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
 	outs, err := h.runConsumers(&consWg)
 
 	if err != nil {
-		cancel()
+		cancelProds()
 		prodsWg.Wait()
 		close(in)
 		closeAll(outs)
@@ -64,7 +64,7 @@ func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
 
 	go func() {
 		<-ctx.Done()
-		cancel()
+		cancelProds()
 		prodsWg.Wait()
 		close(in)
 		wg.Done()
