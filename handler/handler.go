@@ -1,7 +1,11 @@
 package handler
 
-import "github.com/ushis/gesundheit/result"
+import (
+	"sync"
+
+	"github.com/ushis/gesundheit/result"
+)
 
 type Handler interface {
-	Handle(result.Event) error
+	Run(*sync.WaitGroup) (chan<- result.Event, error)
 }

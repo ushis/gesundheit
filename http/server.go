@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"embed"
 	"encoding/json"
 	"io/fs"
@@ -29,66 +28,63 @@ func init() {
 }
 
 type Server struct {
-	Listen  string
-	db      db.Database
-	sockets *sockPool
+	db     db.Database
+	listen string
 }
 
-type Config struct {
-	Listen string
+func New(db db.Database, listen string) *Server {
+	return &Server{db: db, listen: listen}
 }
 
-func New(listen string, db db.Database) *Server {
-	return &Server{Listen: listen, db: db, sockets: newSockPool()}
-}
-
-func (s *Server) Run(ctx context.Context, wg *sync.WaitGroup) error {
-	l, err := net.Listen("tcp", s.Listen)
+func (s *Server) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
+	l, err := net.Listen("tcp", s.listen)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
+	socks := newSockPool()
+	chn := make(chan result.Event)
 	wg.Add(2)
 
 	go func() {
-		s.run(l)
-		s.sockets.closeAll()
+		s.serve(l, socks)
+		socks.closeAll()
 		wg.Done()
 	}()
 
 	go func() {
-		<-ctx.Done()
+		s.run(socks, chn)
 		l.Close()
 		wg.Done()
 	}()
 
-	return nil
+	return chn, nil
 }
 
-func (s *Server) Handle(e result.Event) error {
-	s.sockets.broadcast(e)
-	return nil
+func (s *Server) run(socks *sockPool, chn <-chan result.Event) {
+	for e := range chn {
+		socks.broadcast(e)
+	}
 }
 
-func (s *Server) run(l net.Listener) {
+func (s *Server) serve(l net.Listener, socks *sockPool) {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.FS(uiFS)))
-	mux.HandleFunc("/api/events", s.serveEvents)
-	mux.HandleFunc("/api/events/socket", s.serveEventsSocket)
+
+	mux.HandleFunc("/api/events", func(w http.ResponseWriter, r *http.Request) {
+		if events, err := s.db.GetEvents(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			json.NewEncoder(w).Encode(events)
+		}
+	})
+
+	mux.HandleFunc("/api/events/socket", func(w http.ResponseWriter, r *http.Request) {
+		if conn, _, _, err := ws.UpgradeHTTP(r, w); err == nil {
+			socks.serve(conn)
+		}
+	})
+
 	http.Serve(l, mux)
-}
-
-func (s *Server) serveEvents(w http.ResponseWriter, r *http.Request) {
-	if events, err := s.db.GetEvents(); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		json.NewEncoder(w).Encode(events)
-	}
-}
-
-func (s *Server) serveEventsSocket(w http.ResponseWriter, r *http.Request) {
-	if conn, _, _, err := ws.UpgradeHTTP(r, w); err == nil {
-		s.sockets.serve(conn)
-	}
 }

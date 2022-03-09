@@ -119,10 +119,7 @@ func cmdServe(args []string) {
 	ctx, stop := context.WithCancel(context.Background())
 
 	if http != nil {
-		if err := http.Run(ctx, &wg); err != nil {
-			log.Fatalln("failed to run http:", err)
-		}
-		h.registerHandler(http)
+		h.registerConsumer(http)
 	}
 
 	if err := h.run(ctx, &wg); err != nil {

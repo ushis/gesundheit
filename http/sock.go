@@ -47,6 +47,7 @@ func (p *sockPool) serve(conn net.Conn) {
 
 func (p *sockPool) broadcast(e result.Event) {
 	p.mutex.Lock()
+	defer p.mutex.Unlock()
 
 	for _, sock := range p.pool {
 		if err := sock.e.Encode(e); err != nil {
@@ -54,7 +55,6 @@ func (p *sockPool) broadcast(e result.Event) {
 		}
 		sock.w.Flush()
 	}
-	p.mutex.Unlock()
 }
 
 func (p *sockPool) close(sock sock) {

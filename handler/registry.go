@@ -4,6 +4,8 @@ import "errors"
 
 type HandlerFunc func(func(interface{}) error) (Handler, error)
 
+type SimpleFunc func(func(interface{}) error) (Simple, error)
+
 type Registry map[string]HandlerFunc
 
 func (r Registry) Register(name string, fn HandlerFunc) {
@@ -24,6 +26,17 @@ var defaultRegistry = make(Registry)
 
 func Register(name string, fn HandlerFunc) {
 	defaultRegistry.Register(name, fn)
+}
+
+func RegisterSimple(name string, fn SimpleFunc) {
+	defaultRegistry.Register(name, wrapSimpleFunc(fn))
+}
+
+func wrapSimpleFunc(fn SimpleFunc) HandlerFunc {
+	return func(configure func(interface{}) error) (Handler, error) {
+		simple, err := fn(configure)
+		return simpleWrapper{simple}, err
+	}
 }
 
 func Get(name string) (HandlerFunc, error) {

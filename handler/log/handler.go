@@ -10,10 +10,10 @@ import (
 type Handler struct{}
 
 func init() {
-	handler.Register("log", New)
+	handler.RegisterSimple("log", New)
 }
 
-func New(_ func(interface{}) error) (handler.Handler, error) {
+func New(_ func(interface{}) error) (handler.Simple, error) {
 	return Handler{}, nil
 }
 

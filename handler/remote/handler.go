@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"net"
 
-	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/crypto"
 	"github.com/ushis/gesundheit/handler"
+	"github.com/ushis/gesundheit/result"
 )
 
 func init() {
-	handler.Register("remote", New)
+	handler.RegisterSimple("remote", New)
 }
 
 type Handler struct {
@@ -25,7 +25,7 @@ type Config struct {
 	Address    string
 }
 
-func New(configure func(interface{}) error) (handler.Handler, error) {
+func New(configure func(interface{}) error) (handler.Simple, error) {
 	conf := Config{}
 
 	if err := configure(&conf); err != nil {

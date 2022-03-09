@@ -5,86 +5,115 @@ import (
 	"log"
 	"sync"
 
-	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/db"
-	"github.com/ushis/gesundheit/handler"
-	"github.com/ushis/gesundheit/input"
 	"github.com/ushis/gesundheit/result"
 )
 
+type producer interface {
+	Run(context.Context, *sync.WaitGroup, chan<- result.Event) error
+}
+
+type consumer interface {
+	Run(*sync.WaitGroup) (chan<- result.Event, error)
+}
+
 type hub struct {
-	db           db.Database
-	checkRunners []check.Runner
-	inputRunners []input.Runner
-	handlers     []handler.Handler
+	db        db.Database
+	producers []producer
+	consumers []consumer
 }
 
-func (h *hub) registerCheckRunner(r check.Runner) {
-	h.checkRunners = append(h.checkRunners, r)
+func (h *hub) registerProducer(p producer) {
+	h.producers = append(h.producers, p)
 }
 
-func (h *hub) registerInputRunner(r input.Runner) {
-	h.inputRunners = append(h.inputRunners, r)
-}
-
-func (h *hub) registerHandler(r handler.Handler) {
-	h.handlers = append(h.handlers, r)
+func (h *hub) registerConsumer(c consumer) {
+	h.consumers = append(h.consumers, c)
 }
 
 func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
-	ctx, cancelRunners := context.WithCancel(ctx)
-	runnersWg := sync.WaitGroup{}
-	events := make(chan result.Event)
+	ctx, cancelProds := context.WithCancel(ctx)
+	prodsWg := sync.WaitGroup{}
+	in, err := h.runProducers(ctx, &prodsWg)
 
-	if err := h.runRunners(ctx, &runnersWg, events); err != nil {
-		cancelRunners()
-		runnersWg.Wait()
+	if err != nil {
+		cancelProds()
+		prodsWg.Wait()
+		close(in)
+		return err
+	}
+	consWg := sync.WaitGroup{}
+	outs, err := h.runConsumers(&consWg)
+
+	if err != nil {
+		cancelProds()
+		prodsWg.Wait()
+		close(in)
+		closeAll(outs)
+		consWg.Wait()
 		return err
 	}
 	wg.Add(2)
 
 	go func() {
-		for e := range events {
-			h.dispatch(e)
-		}
+		h.dispatch(outs, in)
+		closeAll(outs)
+		consWg.Wait()
 		wg.Done()
 	}()
 
 	go func() {
 		<-ctx.Done()
-		cancelRunners()
-		runnersWg.Wait()
-		close(events)
+		cancelProds()
+		prodsWg.Wait()
+		close(in)
 		wg.Done()
 	}()
 
 	return nil
 }
 
-func (h *hub) runRunners(ctx context.Context, wg *sync.WaitGroup, events chan<- result.Event) error {
-	for _, r := range h.inputRunners {
-		if err := r.Run(ctx, wg, events); err != nil {
-			return err
+func (h *hub) runProducers(ctx context.Context, wg *sync.WaitGroup) (chan result.Event, error) {
+	chn := make(chan result.Event)
+
+	for _, p := range h.producers {
+		if err := p.Run(ctx, wg, chn); err != nil {
+			return chn, err
 		}
 	}
-	for _, r := range h.checkRunners {
-		if err := r.Run(ctx, wg, events); err != nil {
-			return err
-		}
-	}
-	return nil
+	return chn, nil
 }
 
-func (h *hub) dispatch(e result.Event) {
-	if ok, err := h.db.InsertEvent(e); err != nil {
-		log.Println(err)
-	} else if !ok {
-		return
-	}
+func (h *hub) runConsumers(wg *sync.WaitGroup) ([]chan<- result.Event, error) {
+	chans := make([]chan<- result.Event, len(h.consumers))
 
-	for _, r := range h.handlers {
-		if err := r.Handle(e); err != nil {
-			log.Println(err)
+	for i, c := range h.consumers {
+		if out, err := c.Run(wg); err != nil {
+			return chans[:i], err
+		} else {
+			chans[i] = out
 		}
+	}
+	return chans, nil
+}
+
+func (h *hub) dispatch(outs []chan<- result.Event, in <-chan result.Event) {
+	for e := range in {
+		ok, err := h.db.InsertEvent(e)
+
+		if err != nil {
+			log.Println(err)
+		} else if !ok {
+			continue
+		}
+		for _, out := range outs {
+			out <- e
+		}
+	}
+}
+
+func closeAll(chans []chan<- result.Event) {
+	for _, chn := range chans {
+		close(chn)
 	}
 }
