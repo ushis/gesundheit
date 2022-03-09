@@ -99,7 +99,7 @@ func loadConf(path string) (config, db.Database, *http.Server, error) {
 	var httpServer *http.Server
 
 	if conf.Http.Enabled {
-		httpServer = http.New(conf.Http.Listen, db)
+		httpServer = http.New(db, conf.Http.Listen)
 	}
 	if len(meta.Undecoded()) > 0 {
 		return conf, nil, nil, fmt.Errorf("failed to load config: %s: unknown field %s", path, meta.Undecoded()[0])
