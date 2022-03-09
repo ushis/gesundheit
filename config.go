@@ -242,7 +242,7 @@ func (l modConfLoader) loadInput(conf *inputConfig, path string, meta toml.MetaD
 	if len(meta.Undecoded()) > 0 {
 		return fmt.Errorf("failed to load input config: %s: unknown field %s", path, meta.Undecoded()[0])
 	}
-	l.hub.registerProducer(input.NewRunner(in))
+	l.hub.registerProducer(in)
 
 	return nil
 }
