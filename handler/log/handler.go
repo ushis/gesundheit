@@ -14,7 +14,7 @@ func init() {
 }
 
 func New(_ func(interface{}) error) (handler.Handler, error) {
-	return Handler{}, nil
+	return handler.Wrap(Handler{}), nil
 }
 
 func (h Handler) Handle(e result.Event) error {

@@ -181,7 +181,7 @@ func (l modConfLoader) loadCheck(conf *checkConfig, path string, meta toml.MetaD
 	if err != nil {
 		return fmt.Errorf("failed to load check config: %s: %s", path, err.Error())
 	}
-	l.hub.registerCheckRunner(check.NewRunner(l.node, filepath.Base(path), conf.Description, interval, chk))
+	l.hub.registerProducer(check.NewRunner(l.node, filepath.Base(path), conf.Description, interval, chk))
 
 	return nil
 }
@@ -208,7 +208,7 @@ func (l modConfLoader) loadHandler(conf *handlerConfig, path string, meta toml.M
 		}
 		filters = append(filters, f)
 	}
-	l.hub.registerHandler(filter.Handler(hdl, filters))
+	l.hub.registerConsumer(filter.Handler(hdl, filters))
 
 	if len(meta.Undecoded()) > 0 {
 		return fmt.Errorf("failed to load handler config: %s: unknown field %s", path, meta.Undecoded()[0])
@@ -242,7 +242,7 @@ func (l modConfLoader) loadInput(conf *inputConfig, path string, meta toml.MetaD
 	if len(meta.Undecoded()) > 0 {
 		return fmt.Errorf("failed to load input config: %s: unknown field %s", path, meta.Undecoded()[0])
 	}
-	l.hub.registerInputRunner(input.NewRunner(in))
+	l.hub.registerProducer(input.NewRunner(in))
 
 	return nil
 }

@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/handler"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Handler struct {
@@ -35,7 +35,7 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 	}
 	url.Path = "/message"
 	h.Url = url.String()
-	return h, nil
+	return handler.Wrap(h), nil
 }
 
 type Message struct {

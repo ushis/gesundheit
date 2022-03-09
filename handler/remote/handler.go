@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"net"
 
-	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/crypto"
 	"github.com/ushis/gesundheit/handler"
+	"github.com/ushis/gesundheit/result"
 )
 
 func init() {
@@ -51,7 +51,7 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return Handler{Cipher: cipher, Addr: addr}, nil
+	return handler.Wrap(Handler{Cipher: cipher, Addr: addr}), nil
 }
 
 func (h Handler) Handle(e result.Event) error {
