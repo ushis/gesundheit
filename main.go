@@ -31,7 +31,6 @@ import (
 	_ "github.com/ushis/gesundheit/db/redis"
 	_ "github.com/ushis/gesundheit/filter/office-hours"
 	_ "github.com/ushis/gesundheit/filter/result-change"
-	"github.com/ushis/gesundheit/handler"
 	_ "github.com/ushis/gesundheit/handler/gotify"
 	_ "github.com/ushis/gesundheit/handler/log"
 	_ "github.com/ushis/gesundheit/handler/remote"
@@ -120,10 +119,7 @@ func cmdServe(args []string) {
 	ctx, stop := context.WithCancel(context.Background())
 
 	if http != nil {
-		if err := http.Run(ctx, &wg); err != nil {
-			log.Fatalln("failed to run http:", err)
-		}
-		h.registerConsumer(handler.Wrap(http))
+		h.registerConsumer(http)
 	}
 
 	if err := h.run(ctx, &wg); err != nil {

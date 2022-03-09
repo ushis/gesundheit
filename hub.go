@@ -57,6 +57,8 @@ func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
 
 	go func() {
 		h.dispatch(outs, in)
+		closeAll(outs)
+		consWg.Wait()
 		wg.Done()
 	}()
 
@@ -65,8 +67,6 @@ func (h *hub) run(ctx context.Context, wg *sync.WaitGroup) error {
 		cancel()
 		prodsWg.Wait()
 		close(in)
-		closeAll(outs)
-		consWg.Wait()
 		wg.Done()
 	}()
 

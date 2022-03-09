@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"embed"
 	"encoding/json"
 	"io/fs"
@@ -42,35 +41,37 @@ func New(listen string, db db.Database) *Server {
 	return &Server{Listen: listen, db: db, sockets: newSockPool()}
 }
 
-func (s *Server) Run(ctx context.Context, wg *sync.WaitGroup) error {
+func (s *Server) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 	l, err := net.Listen("tcp", s.Listen)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
+	chn := make(chan result.Event)
 	wg.Add(2)
 
 	go func() {
-		s.run(l)
+		s.serve(l)
 		s.sockets.closeAll()
 		wg.Done()
 	}()
 
 	go func() {
-		<-ctx.Done()
+		s.run(chn)
 		l.Close()
 		wg.Done()
 	}()
 
-	return nil
+	return chn, nil
 }
 
-func (s *Server) Handle(e result.Event) error {
-	s.sockets.broadcast(e)
-	return nil
+func (s *Server) run(chn <-chan result.Event) {
+	for e := range chn {
+		s.sockets.broadcast(e)
+	}
 }
 
-func (s *Server) run(l net.Listener) {
+func (s *Server) serve(l net.Listener) {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.FS(uiFS)))
 	mux.HandleFunc("/api/events", s.serveEvents)

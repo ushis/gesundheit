@@ -2,6 +2,7 @@ package filemtime
 
 import (
 	"os/exec"
+	"syscall"
 
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/result"
@@ -26,7 +27,9 @@ func New(_ check.Database, configure func(interface{}) error) (check.Check, erro
 }
 
 func (c Check) Exec() result.Result {
-	out, err := exec.Command(c.Command, c.Args...).CombinedOutput()
+	cmd := exec.Command(c.Command, c.Args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: 0}
+	out, err := cmd.CombinedOutput()
 
 	if err == nil {
 		return result.OK(string(out))
