@@ -38,11 +38,7 @@ func (h Handler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 	wg.Add(2)
 
 	go func() {
-		for e := range chn {
-			if err := session.push(e); err != nil {
-				log.Println(err)
-			}
-		}
+		h.send(session, chn)
 		cancel()
 		wg.Done()
 	}()
@@ -53,6 +49,14 @@ func (h Handler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 	}()
 
 	return chn, nil
+}
+
+func (h Handler) send(s *session, in <-chan result.Event) {
+	for e := range in {
+		if err := s.send(e); err != nil {
+			log.Println(err)
+		}
+	}
 }
 
 type session struct {
@@ -73,25 +77,26 @@ const reconnectDelay = 4 * time.Second
 
 func (s *session) run(ctx context.Context) {
 	for {
-		err := s.connect()
+		if err := s.connect(); err != nil {
+			log.Println(err)
 
-		if err == nil {
+			select {
+			case <-time.After(reconnectDelay):
+			case <-ctx.Done():
+				return
+			}
+		} else {
 			s.ready = true
 
 			select {
-			case err = <-s.chnClosed:
+			case err := <-s.chnClosed:
 				s.ready = false
+				log.Println(err)
 			case <-ctx.Done():
+				s.ready = false
 				s.conn.Close()
 				return
 			}
-		}
-		log.Println(err)
-
-		select {
-		case <-time.After(reconnectDelay):
-		case <-ctx.Done():
-			return
 		}
 	}
 }
@@ -125,9 +130,9 @@ func (s *session) connect() (err error) {
 	return nil
 }
 
-func (s *session) push(e result.Event) error {
+func (s *session) send(e result.Event) error {
 	if !s.ready {
-		return fmt.Errorf("amqp: failed to push event: connection closed")
+		return fmt.Errorf("amqp: failed to send event: connection closed")
 	}
 	body, err := json.Marshal(e)
 
@@ -142,7 +147,7 @@ func (s *session) push(e result.Event) error {
 		Body:         body,
 	}
 	if err := s.chn.Publish(s.exchange, "", false, false, msg); err != nil {
-		return fmt.Errorf("amqp: failed to publish event: %s", err)
+		return fmt.Errorf("amqp: failed to send event: %s", err)
 	}
 	if c := <-s.confirms; !c.Ack {
 		return fmt.Errorf("amqp: broker rejected message: %s", e.Id)
