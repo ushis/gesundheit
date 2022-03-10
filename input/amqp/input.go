@@ -32,11 +32,11 @@ func New(configure func(interface{}) error) (input.Input, error) {
 	return input, nil
 }
 
-func (i Input) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- result.Event) error {
+func (i Input) Run(ctx context.Context, wg *sync.WaitGroup, out chan<- result.Event) error {
 	wg.Add(1)
 
 	go func() {
-		i.run(ctx, events)
+		i.run(ctx, wg, out)
 		wg.Done()
 	}()
 
@@ -45,9 +45,9 @@ func (i Input) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- result
 
 const reconnectDelay = 4 * time.Second
 
-func (i Input) run(ctx context.Context, out chan<- result.Event) {
+func (i Input) run(ctx context.Context, wg *sync.WaitGroup, out chan<- result.Event) {
 	for {
-		if err := i.receive(ctx, out); err != nil {
+		if err := i.connectAndReceive(ctx, wg, out); err != nil {
 			log.Println(err)
 		}
 		select {
@@ -58,25 +58,31 @@ func (i Input) run(ctx context.Context, out chan<- result.Event) {
 	}
 }
 
-func (i Input) receive(ctx context.Context, out chan<- result.Event) error {
+func (i Input) connectAndReceive(ctx context.Context, wg *sync.WaitGroup, out chan<- result.Event) error {
 	conn, in, err := connect(i.Url, i.Exchange, i.Queue)
 
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	wg.Add(1)
+
+	go func() {
+		i.receive(out, in)
+		wg.Done()
+	}()
 
 	connClosed := make(chan *amqp.Error)
 	conn.NotifyClose(connClosed)
 
-	go func() {
-		select {
-		case <-connClosed:
-		case <-ctx.Done():
-			conn.Close()
-		}
-	}()
+	select {
+	case err := <-connClosed:
+		return err
+	case <-ctx.Done():
+		return conn.Close()
+	}
+}
 
+func (i Input) receive(out chan<- result.Event, in <-chan amqp.Delivery) {
 	for d := range in {
 		e := result.Event{}
 
@@ -88,7 +94,6 @@ func (i Input) receive(ctx context.Context, out chan<- result.Event) error {
 			d.Ack(false)
 		}
 	}
-	return nil
 }
 
 func connect(url, exchange, queue string) (*amqp.Connection, <-chan amqp.Delivery, error) {
