@@ -32,34 +32,34 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 }
 
 func (h Handler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
-	session := newSession(h.Url, h.Exchange)
+	client := newClient(h.Url, h.Exchange)
 	ctx, cancel := context.WithCancel(context.Background())
 	chn := make(chan result.Event)
 	wg.Add(2)
 
 	go func() {
-		h.send(session, chn)
+		h.send(client, chn)
 		cancel()
 		wg.Done()
 	}()
 
 	go func() {
-		session.run(ctx)
+		client.run(ctx)
 		wg.Done()
 	}()
 
 	return chn, nil
 }
 
-func (h Handler) send(s *session, in <-chan result.Event) {
+func (h Handler) send(c *client, in <-chan result.Event) {
 	for e := range in {
-		if err := s.send(e); err != nil {
+		if err := c.send(e); err != nil {
 			log.Println(err)
 		}
 	}
 }
 
-type session struct {
+type client struct {
 	ready     bool
 	url       string
 	exchange  string
@@ -69,15 +69,15 @@ type session struct {
 	confirms  chan amqp.Confirmation
 }
 
-func newSession(url, exchange string) *session {
-	return &session{ready: false, url: url, exchange: exchange}
+func newClient(url, exchange string) *client {
+	return &client{ready: false, url: url, exchange: exchange}
 }
 
 const reconnectDelay = 4 * time.Second
 
-func (s *session) run(ctx context.Context) {
+func (c *client) run(ctx context.Context) {
 	for {
-		if err := s.connect(); err != nil {
+		if err := c.connect(); err != nil {
 			log.Println(err)
 
 			select {
@@ -86,52 +86,52 @@ func (s *session) run(ctx context.Context) {
 				return
 			}
 		} else {
-			s.ready = true
+			c.ready = true
 
 			select {
-			case err := <-s.chnClosed:
-				s.ready = false
+			case err := <-c.chnClosed:
+				c.ready = false
 				log.Println(err)
 			case <-ctx.Done():
-				s.ready = false
-				s.conn.Close()
+				c.ready = false
+				c.conn.Close()
 				return
 			}
 		}
 	}
 }
 
-func (s *session) connect() (err error) {
-	s.conn, err = amqp.Dial(s.url)
+func (c *client) connect() (err error) {
+	c.conn, err = amqp.Dial(c.url)
 
 	if err != nil {
 		return fmt.Errorf("amqp: failed to connect: %s", err)
 	}
-	s.chn, err = s.conn.Channel()
+	c.chn, err = c.conn.Channel()
 
 	if err != nil {
-		s.conn.Close()
+		c.conn.Close()
 		return fmt.Errorf("amqp: failed to create channel: %s", err)
 	}
-	if err := s.chn.ExchangeDeclare(s.exchange, "fanout", true, false, false, false, nil); err != nil {
-		s.conn.Close()
+	if err := c.chn.ExchangeDeclare(c.exchange, "fanout", true, false, false, false, nil); err != nil {
+		c.conn.Close()
 		return fmt.Errorf("amqp: failed to declare exchange: %s", err)
 	}
-	if err := s.chn.Confirm(false); err != nil {
-		s.conn.Close()
+	if err := c.chn.Confirm(false); err != nil {
+		c.conn.Close()
 		return fmt.Errorf("amqp: failed to put channel in confirmation mode: %s", err)
 	}
-	s.chnClosed = make(chan *amqp.Error)
-	s.chn.NotifyClose(s.chnClosed)
+	c.chnClosed = make(chan *amqp.Error)
+	c.chn.NotifyClose(c.chnClosed)
 
-	s.confirms = make(chan amqp.Confirmation)
-	s.chn.NotifyPublish(s.confirms)
+	c.confirms = make(chan amqp.Confirmation)
+	c.chn.NotifyPublish(c.confirms)
 
 	return nil
 }
 
-func (s *session) send(e result.Event) error {
-	if !s.ready {
+func (c *client) send(e result.Event) error {
+	if !c.ready {
 		return fmt.Errorf("amqp: failed to send event: connection closed")
 	}
 	body, err := json.Marshal(e)
@@ -146,10 +146,10 @@ func (s *session) send(e result.Event) error {
 		Timestamp:    e.Timestamp,
 		Body:         body,
 	}
-	if err := s.chn.Publish(s.exchange, "", false, false, msg); err != nil {
+	if err := c.chn.Publish(c.exchange, "", false, false, msg); err != nil {
 		return fmt.Errorf("amqp: failed to send event: %s", err)
 	}
-	if c := <-s.confirms; !c.Ack {
+	if conf := <-c.confirms; !conf.Ack {
 		return fmt.Errorf("amqp: broker rejected message: %s", e.Id)
 	}
 	return nil
