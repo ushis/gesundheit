@@ -2,6 +2,7 @@ package redis
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/ushis/gesundheit/db"
@@ -69,7 +70,7 @@ func (db Database) InsertEvent(e result.Event) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	ttl := 2 * e.CheckInterval
+	ttl := int64(time.Until(e.ExpiresAt) / time.Second)
 	keys := []string{e.NodeName, e.CheckId, e.Id}
 	vals := []interface{}{val, ttl}
 	res, err := db.rdb.Eval(db.rdb.Context(), scriptStoreEvent, keys, vals...).Int()

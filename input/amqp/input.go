@@ -42,13 +42,15 @@ func (i Input) Run(ctx context.Context, wg *sync.WaitGroup, events chan<- result
 	return nil
 }
 
+const reconnectDelay = 4 * time.Second
+
 func (i Input) run(ctx context.Context, out chan<- result.Event) {
 	for {
 		if err := i.receive(ctx, out); err != nil {
 			log.Println(err)
 		}
 		select {
-		case <-time.After(2 * time.Second):
+		case <-time.After(reconnectDelay):
 		case <-ctx.Done():
 			return
 		}

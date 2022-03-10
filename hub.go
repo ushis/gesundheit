@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/ushis/gesundheit/db"
 	"github.com/ushis/gesundheit/result"
@@ -99,6 +100,9 @@ func (h *hub) runConsumers(wg *sync.WaitGroup) ([]chan<- result.Event, error) {
 
 func (h *hub) dispatch(outs []chan<- result.Event, in <-chan result.Event) {
 	for e := range in {
+		if time.Now().After(e.ExpiresAt) {
+			continue
+		}
 		ok, err := h.db.InsertEvent(e)
 
 		if err != nil {

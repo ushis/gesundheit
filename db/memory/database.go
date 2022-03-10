@@ -37,7 +37,7 @@ func (db Database) InsertEvent(e result.Event) (bool, error) {
 	}
 	prevE, ok := checks[e.CheckId]
 
-	if !ok || prevE.Id != e.Id {
+	if !ok || (prevE.Id != e.Id && prevE.Timestamp.Before(e.Timestamp)) {
 		checks[e.CheckId] = e
 		return true, nil
 	}
@@ -48,11 +48,12 @@ func (db Database) GetEvents() ([]result.Event, error) {
 	db.RLock()
 	defer db.RUnlock()
 
+	now := time.Now()
 	events := []result.Event{}
 
 	for _, checks := range db.db {
 		for _, event := range checks {
-			if !isExpired(event) {
+			if !event.ExpiresAt.After(now) {
 				events = append(events, event)
 			}
 		}
@@ -69,10 +70,11 @@ func (db Database) GetEventsByNode(name string) ([]result.Event, error) {
 	if !ok {
 		return []result.Event{}, nil
 	}
+	now := time.Now()
 	events := []result.Event{}
 
 	for _, event := range checks {
-		if !isExpired(event) {
+		if !event.ExpiresAt.After(now) {
 			events = append(events, event)
 		}
 	}
@@ -93,9 +95,4 @@ func (db Database) GetLatestEventByNode(name string) (event result.Event, ok boo
 		}
 	}
 	return event, true, nil
-}
-
-func isExpired(e result.Event) bool {
-	ttl := time.Duration(e.CheckInterval) * time.Second * 2
-	return time.Since(e.Timestamp) > ttl
 }

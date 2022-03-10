@@ -54,13 +54,15 @@ func (h Handler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 	return in, nil
 }
 
+const reconnectDelay = 4 * time.Second
+
 func (h Handler) run(ctx context.Context, in <-chan result.Event) {
 	for {
 		if err := h.publish(ctx, in); err != nil {
 			log.Println(err)
 		}
 		select {
-		case <-time.After(2 * time.Second):
+		case <-time.After(reconnectDelay):
 		case <-ctx.Done():
 			return
 		}

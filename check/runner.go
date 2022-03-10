@@ -70,6 +70,7 @@ func (r Runner) run(ctx context.Context, events chan<- result.Event) {
 			Status:           res.Status,
 			Message:          res.Message,
 			Timestamp:        time.Now(),
+			ExpiresAt:        time.Now().Add(3 * interval),
 		}
 		statusHistory.Append(res.Status)
 

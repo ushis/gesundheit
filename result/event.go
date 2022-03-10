@@ -12,4 +12,5 @@ type Event struct {
 	Status           Status
 	Message          string
 	Timestamp        time.Time
+	ExpiresAt        time.Time
 }
