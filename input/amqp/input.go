@@ -14,8 +14,9 @@ import (
 )
 
 type Input struct {
-	Url   string
-	Queue string
+	Url      string
+	Exchange string
+	Queue    string
 }
 
 func init() {
@@ -58,7 +59,7 @@ func (i Input) run(ctx context.Context, out chan<- result.Event) {
 }
 
 func (i Input) receive(ctx context.Context, out chan<- result.Event) error {
-	conn, in, err := connect(i.Url, i.Queue)
+	conn, in, err := connect(i.Url, i.Exchange, i.Queue)
 
 	if err != nil {
 		return err
@@ -90,7 +91,7 @@ func (i Input) receive(ctx context.Context, out chan<- result.Event) error {
 	return nil
 }
 
-func connect(url, queue string) (*amqp.Connection, <-chan amqp.Delivery, error) {
+func connect(url, exchange, queue string) (*amqp.Connection, <-chan amqp.Delivery, error) {
 	conn, err := amqp.Dial(url)
 
 	if err != nil {
@@ -102,6 +103,10 @@ func connect(url, queue string) (*amqp.Connection, <-chan amqp.Delivery, error) 
 		conn.Close()
 		return nil, nil, fmt.Errorf("amqp: failed to create channel: %s", err)
 	}
+	if err := chn.ExchangeDeclare(exchange, "fanout", true, false, false, false, nil); err != nil {
+		conn.Close()
+		return nil, nil, fmt.Errorf("amqp: failed to declare exchange: %s", err)
+	}
 	if err := chn.Confirm(false); err != nil {
 		conn.Close()
 		return nil, nil, fmt.Errorf("amqp: failed to put channel in confirmation mode: %s", err)
@@ -109,6 +114,10 @@ func connect(url, queue string) (*amqp.Connection, <-chan amqp.Delivery, error) 
 	if _, err := chn.QueueDeclare(queue, true, false, false, false, nil); err != nil {
 		conn.Close()
 		return nil, nil, fmt.Errorf("amqp: failed to declare queue: %s", err)
+	}
+	if err := chn.QueueBind(queue, "", exchange, false, nil); err != nil {
+		conn.Close()
+		return nil, nil, fmt.Errorf("amqp: failed to bind queue to exchange: %s", err)
 	}
 	c, err := chn.Consume(queue, "", false, false, false, false, nil)
 

@@ -2,3 +2,10 @@
 [Http]
 Enabled = true
 Listen = ":8080"
+
+[Database]
+Module = "redis"
+
+[Database.Config]
+Address = "localhost:6379"
+DB = 0

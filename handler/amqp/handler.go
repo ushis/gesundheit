@@ -14,8 +14,8 @@ import (
 )
 
 type Handler struct {
-	Url   string
-	Queue string
+	Url      string
+	Exchange string
 }
 
 func init() {
@@ -70,7 +70,7 @@ func (h Handler) run(ctx context.Context, in <-chan result.Event) {
 }
 
 func (h Handler) publish(ctx context.Context, in <-chan result.Event) error {
-	conn, chn, err := connect(h.Url, h.Queue)
+	conn, chn, err := connect(h.Url, h.Exchange)
 
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func (h Handler) publish(ctx context.Context, in <-chan result.Event) error {
 				Timestamp:    e.Timestamp,
 				Body:         body,
 			}
-			if err := chn.Publish("", h.Queue, false, false, msg); err != nil {
+			if err := chn.Publish(h.Exchange, "", false, false, msg); err != nil {
 				return fmt.Errorf("amqp: failed to publish event: %s", err)
 			}
 			if c := <-msgConfirmed; !c.Ack {
@@ -112,7 +112,7 @@ func (h Handler) publish(ctx context.Context, in <-chan result.Event) error {
 	}
 }
 
-func connect(url, queue string) (*amqp.Connection, *amqp.Channel, error) {
+func connect(url, exchange string) (*amqp.Connection, *amqp.Channel, error) {
 	conn, err := amqp.Dial(url)
 
 	if err != nil {
@@ -124,13 +124,13 @@ func connect(url, queue string) (*amqp.Connection, *amqp.Channel, error) {
 		conn.Close()
 		return nil, nil, fmt.Errorf("amqp: failed to create channel: %s", err)
 	}
+	if err := chn.ExchangeDeclare(exchange, "fanout", true, false, false, false, nil); err != nil {
+		conn.Close()
+		return nil, nil, fmt.Errorf("amqp: failed to declare exchange: %s", err)
+	}
 	if err := chn.Confirm(false); err != nil {
 		conn.Close()
 		return nil, nil, fmt.Errorf("amqp: failed to put channel in confirmation mode: %s", err)
-	}
-	if _, err := chn.QueueDeclare(queue, true, false, false, false, nil); err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("amqp: failed to declare queue: %s", err)
 	}
 	return conn, chn, nil
 }
