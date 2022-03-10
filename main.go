@@ -31,9 +31,11 @@ import (
 	_ "github.com/ushis/gesundheit/db/redis"
 	_ "github.com/ushis/gesundheit/filter/office-hours"
 	_ "github.com/ushis/gesundheit/filter/result-change"
+	_ "github.com/ushis/gesundheit/handler/amqp"
 	_ "github.com/ushis/gesundheit/handler/gotify"
 	_ "github.com/ushis/gesundheit/handler/log"
 	_ "github.com/ushis/gesundheit/handler/remote"
+	_ "github.com/ushis/gesundheit/input/amqp"
 	_ "github.com/ushis/gesundheit/input/remote"
 )
 

@@ -8,6 +8,7 @@ require (
 	github.com/gobwas/ws v1.1.0
 	github.com/google/uuid v1.3.0
 	github.com/itchyny/gojq v0.12.7
+	github.com/streadway/amqp v1.0.0
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 )
 

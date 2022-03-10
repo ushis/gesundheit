@@ -1,4 +1,4 @@
-package mtime
+package diskspace
 
 import (
 	"syscall"
