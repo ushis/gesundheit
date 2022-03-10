@@ -32,35 +32,62 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 }
 
 func (h Handler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
+	session := newSession(h.Url, h.Exchange)
 	ctx, cancel := context.WithCancel(context.Background())
-	in := make(chan result.Event)
-	out := make(chan result.Event)
+	chn := make(chan result.Event)
 	wg.Add(2)
 
 	go func() {
-		for e := range in {
-			out <- e
+		for e := range chn {
+			if err := session.push(e); err != nil {
+				log.Println(err)
+			}
 		}
 		cancel()
 		wg.Done()
 	}()
 
 	go func() {
-		h.run(ctx, out)
-		close(out)
+		session.run(ctx)
 		wg.Done()
 	}()
 
-	return in, nil
+	return chn, nil
+}
+
+type session struct {
+	ready     bool
+	url       string
+	exchange  string
+	conn      *amqp.Connection
+	chn       *amqp.Channel
+	chnClosed chan *amqp.Error
+	confirms  chan amqp.Confirmation
+}
+
+func newSession(url, exchange string) *session {
+	return &session{ready: false, url: url, exchange: exchange}
 }
 
 const reconnectDelay = 4 * time.Second
 
-func (h Handler) run(ctx context.Context, in <-chan result.Event) {
+func (s *session) run(ctx context.Context) {
 	for {
-		if err := h.publish(ctx, in); err != nil {
-			log.Println(err)
+		err := s.connect()
+
+		if err == nil {
+			s.ready = true
+
+			select {
+			case err = <-s.chnClosed:
+				s.ready = false
+			case <-ctx.Done():
+				s.conn.Close()
+				return
+			}
 		}
+		log.Println(err)
+
 		select {
 		case <-time.After(reconnectDelay):
 		case <-ctx.Done():
@@ -69,68 +96,56 @@ func (h Handler) run(ctx context.Context, in <-chan result.Event) {
 	}
 }
 
-func (h Handler) publish(ctx context.Context, in <-chan result.Event) error {
-	conn, chn, err := connect(h.Url, h.Exchange)
+func (s *session) connect() (err error) {
+	s.conn, err = amqp.Dial(s.url)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("amqp: failed to connect: %s", err)
 	}
-	defer conn.Close()
+	s.chn, err = s.conn.Channel()
 
-	chnClosed := make(chan *amqp.Error)
-	chn.NotifyClose(chnClosed)
-
-	msgConfirmed := make(chan amqp.Confirmation)
-	chn.NotifyPublish(msgConfirmed)
-
-	for {
-		select {
-		case e := <-in:
-			body, err := json.Marshal(e)
-
-			if err != nil {
-				return fmt.Errorf("amqp: failed to encode event: %s", err)
-			}
-			msg := amqp.Publishing{
-				ContentType:  "application/json; charset=utf-8",
-				DeliveryMode: amqp.Persistent,
-				MessageId:    e.Id,
-				Timestamp:    e.Timestamp,
-				Body:         body,
-			}
-			if err := chn.Publish(h.Exchange, "", false, false, msg); err != nil {
-				return fmt.Errorf("amqp: failed to publish event: %s", err)
-			}
-			if c := <-msgConfirmed; !c.Ack {
-				return fmt.Errorf("amqp: broker rejected message: %s", e.Id)
-			}
-		case err := <-chnClosed:
-			return err
-		case <-ctx.Done():
-			return nil
-		}
+	if err != nil {
+		s.conn.Close()
+		return fmt.Errorf("amqp: failed to create channel: %s", err)
 	}
+	if err := s.chn.ExchangeDeclare(s.exchange, "fanout", true, false, false, false, nil); err != nil {
+		s.conn.Close()
+		return fmt.Errorf("amqp: failed to declare exchange: %s", err)
+	}
+	if err := s.chn.Confirm(false); err != nil {
+		s.conn.Close()
+		return fmt.Errorf("amqp: failed to put channel in confirmation mode: %s", err)
+	}
+	s.chnClosed = make(chan *amqp.Error)
+	s.chn.NotifyClose(s.chnClosed)
+
+	s.confirms = make(chan amqp.Confirmation)
+	s.chn.NotifyPublish(s.confirms)
+
+	return nil
 }
 
-func connect(url, exchange string) (*amqp.Connection, *amqp.Channel, error) {
-	conn, err := amqp.Dial(url)
+func (s *session) push(e result.Event) error {
+	if !s.ready {
+		return fmt.Errorf("amqp: failed to push event: connection closed")
+	}
+	body, err := json.Marshal(e)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("amqp: failed to connect: %s", err)
+		return fmt.Errorf("amqp: failed to encode event: %s", err)
 	}
-	chn, err := conn.Channel()
-
-	if err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("amqp: failed to create channel: %s", err)
+	msg := amqp.Publishing{
+		ContentType:  "application/json; charset=utf-8",
+		DeliveryMode: amqp.Persistent,
+		MessageId:    e.Id,
+		Timestamp:    e.Timestamp,
+		Body:         body,
 	}
-	if err := chn.ExchangeDeclare(exchange, "fanout", true, false, false, false, nil); err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("amqp: failed to declare exchange: %s", err)
+	if err := s.chn.Publish(s.exchange, "", false, false, msg); err != nil {
+		return fmt.Errorf("amqp: failed to publish event: %s", err)
 	}
-	if err := chn.Confirm(false); err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("amqp: failed to put channel in confirmation mode: %s", err)
+	if c := <-s.confirms; !c.Ack {
+		return fmt.Errorf("amqp: broker rejected message: %s", e.Id)
 	}
-	return conn, chn, nil
+	return nil
 }
