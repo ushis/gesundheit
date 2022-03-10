@@ -292,10 +292,31 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
   </thead>
   <tbody>
     <tr>
-      <td rowspan="3"><strong>gotify</strong></td>
-      <td rowspan="3">Send check results to gotify</td>
+      <td rowspan="2"><strong>amqp</strong></td>
+      <td rowspan="2">
+        Send check results to
+        <a href="https://www.rabbitmq.com/">RabbitMQ</a>
+      </td>
       <td>Url</td>
-      <td>Url of the gotify server</td>
+      <td>
+        Url of the RabbitMQ server,
+        e.g. <code>"amqp://guest:guest@localhost:5672"</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Exchange</td>
+      <td>RabbitMQ exchange name, e.g. <code>"gesundheit"</code></td>
+    </tr>
+    <tr>
+      <td rowspan="3"><strong>gotify</strong></td>
+      <td rowspan="3">
+        Send check results to <a href="https://gotify.net/">Gotify</a>
+      </td>
+      <td>Url</td>
+      <td>
+        Url of the Gotify server,
+        e.g. <code>"https://gotify.example.org"</code>
+      </td>
     </tr>
     <tr>
       <td>Token</td>
@@ -377,6 +398,26 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td rowspan="3"><strong>amqp</strong></td>
+      <td rowspan="3">
+        Receive check results from
+        <a href="https://www.rabbitmq.com/">RabbitMQ</a>
+      </td>
+      <td>Url</td>
+      <td>
+        Url of the RabbitMQ server,
+        e.g. <code>"amqp://guest:guest@localhost:5672"</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Exchange</td>
+      <td>RabbitMQ exchange name, e.g. <code>"gesundheit"</code></td>
+    </tr>
+    <tr>
+      <td>Queue</td>
+      <td>RabbitMQ queue name, e.g. <code>"notifications"</code></td>
+    </tr>
     <tr>
       <td rowspan="3"><strong>remote</strong></td>
       <td rowspan="3">Receive check results from a remote gesundheit node</td>
