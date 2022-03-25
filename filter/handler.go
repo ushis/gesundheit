@@ -30,6 +30,7 @@ func (h filterHandler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 
 	go func() {
 		h.run(out, in)
+		close(out)
 		wg.Done()
 	}()
 

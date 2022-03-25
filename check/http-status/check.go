@@ -43,6 +43,8 @@ func (c Check) Exec() result.Result {
 	if err != nil {
 		return result.Fail("failed to get %s: %s", c.HttpConf, err.Error())
 	}
+	resp.Body.Close()
+
 	if resp.StatusCode != c.Status {
 		return result.Fail("%s responded with \"%s\"", c.HttpConf, resp.Status)
 	}
