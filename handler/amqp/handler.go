@@ -31,10 +31,9 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 	return handler, nil
 }
 
-func (h Handler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
+func (h Handler) Run(wg *sync.WaitGroup, chn <-chan result.Event) error {
 	client := newClient(h.Url, h.Exchange)
 	ctx, cancel := context.WithCancel(context.Background())
-	chn := make(chan result.Event)
 	wg.Add(2)
 
 	go func() {
@@ -48,7 +47,7 @@ func (h Handler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 		wg.Done()
 	}()
 
-	return chn, nil
+	return nil
 }
 
 func (h Handler) send(c *client, in <-chan result.Event) {

@@ -22,7 +22,7 @@ jobs:
           cache: 'yarn'
       - uses: "actions/setup-go@v2"
         with:
-          go-version: ">=1.17.7"
+          go-version: ">=1.18"
       - run: |
           yarn install
           yarn lint

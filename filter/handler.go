@@ -19,13 +19,13 @@ type filterHandler struct {
 	filters []Filter
 }
 
-func (h filterHandler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
-	out, err := h.handler.Run(wg)
+func (h filterHandler) Run(wg *sync.WaitGroup, in <-chan result.Event) error {
+	out := make(chan result.Event)
 
-	if err != nil {
-		return nil, err
+	if err := h.handler.Run(wg, out); err != nil {
+		close(out)
+		return err
 	}
-	in := make(chan result.Event)
 	wg.Add(1)
 
 	go func() {
@@ -34,7 +34,7 @@ func (h filterHandler) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 		wg.Done()
 	}()
 
-	return in, nil
+	return nil
 }
 
 func (h filterHandler) run(out chan<- result.Event, in <-chan result.Event) {
