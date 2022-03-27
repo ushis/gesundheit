@@ -36,14 +36,13 @@ func New(db db.Database, listen string) *Server {
 	return &Server{db: db, listen: listen}
 }
 
-func (s *Server) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
+func (s *Server) Run(wg *sync.WaitGroup, chn <-chan result.Event) error {
 	l, err := net.Listen("tcp", s.listen)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 	socks := newSockPool()
-	chn := make(chan result.Event)
 	wg.Add(2)
 
 	go func() {
@@ -58,7 +57,7 @@ func (s *Server) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 		wg.Done()
 	}()
 
-	return chn, nil
+	return nil
 }
 
 func (s *Server) run(socks *sockPool, chn <-chan result.Event) {

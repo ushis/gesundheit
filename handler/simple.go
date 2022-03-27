@@ -15,8 +15,7 @@ type simpleWrapper struct {
 	Simple
 }
 
-func (w simpleWrapper) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
-	chn := make(chan result.Event)
+func (w simpleWrapper) Run(wg *sync.WaitGroup, chn <-chan result.Event) error {
 	wg.Add(1)
 
 	go func() {
@@ -24,7 +23,7 @@ func (w simpleWrapper) Run(wg *sync.WaitGroup) (chan<- result.Event, error) {
 		wg.Done()
 	}()
 
-	return chn, nil
+	return nil
 }
 
 func (w simpleWrapper) run(chn <-chan result.Event) {

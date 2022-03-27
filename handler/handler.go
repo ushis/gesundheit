@@ -7,5 +7,5 @@ import (
 )
 
 type Handler interface {
-	Run(*sync.WaitGroup) (chan<- result.Event, error)
+	Run(*sync.WaitGroup, <-chan result.Event) error
 }

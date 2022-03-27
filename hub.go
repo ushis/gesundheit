@@ -15,7 +15,7 @@ type producer interface {
 }
 
 type consumer interface {
-	Run(*sync.WaitGroup) (chan<- result.Event, error)
+	Run(*sync.WaitGroup, <-chan result.Event) error
 }
 
 type hub struct {
@@ -86,16 +86,17 @@ func (h *hub) runProducers(ctx context.Context, wg *sync.WaitGroup) (chan result
 }
 
 func (h *hub) runConsumers(wg *sync.WaitGroup) ([]chan<- result.Event, error) {
-	chans := make([]chan<- result.Event, len(h.consumers))
+	chns := make([]chan<- result.Event, len(h.consumers))
 
 	for i, c := range h.consumers {
-		if out, err := c.Run(wg); err != nil {
-			return chans[:i], err
-		} else {
-			chans[i] = out
+		chn := make(chan result.Event)
+		chns[i] = chn
+
+		if err := c.Run(wg, chn); err != nil {
+			return chns[:i+1], err
 		}
 	}
-	return chans, nil
+	return chns, nil
 }
 
 func (h *hub) dispatch(outs []chan<- result.Event, in <-chan result.Event) {
@@ -116,7 +117,7 @@ func (h *hub) dispatch(outs []chan<- result.Event, in <-chan result.Event) {
 	}
 }
 
-func closeAll(chans []chan<- result.Event) {
+func closeAll[T any](chans []chan<- T) {
 	for _, chn := range chans {
 		close(chn)
 	}
