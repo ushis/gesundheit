@@ -29,7 +29,7 @@ func (w simpleWrapper) Run(wg *sync.WaitGroup, chn <-chan result.Event) error {
 func (w simpleWrapper) run(chn <-chan result.Event) {
 	for e := range chn {
 		if err := w.Handle(e); err != nil {
-			log.Println(e)
+			log.Println(err)
 		}
 	}
 }
