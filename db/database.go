@@ -9,5 +9,4 @@ type Database interface {
 	InsertEvent(e result.Event) (bool, error)
 	GetEvents() ([]result.Event, error)
 	GetEventsByNode(name string) ([]result.Event, error)
-	GetLatestEventByNode(name string) (event result.Event, ok bool, err error)
 }
