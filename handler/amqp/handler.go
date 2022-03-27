@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/streadway/amqp"
 	"github.com/ushis/gesundheit/handler"
@@ -33,17 +32,10 @@ func New(configure func(interface{}) error) (handler.Handler, error) {
 
 func (h Handler) Run(wg *sync.WaitGroup, chn <-chan result.Event) error {
 	client := newClient(h.Url, h.Exchange)
-	ctx, cancel := context.WithCancel(context.Background())
-	wg.Add(2)
+	wg.Add(1)
 
 	go func() {
 		h.send(client, chn)
-		cancel()
-		wg.Done()
-	}()
-
-	go func() {
-		client.run(ctx)
 		wg.Done()
 	}()
 
@@ -51,56 +43,30 @@ func (h Handler) Run(wg *sync.WaitGroup, chn <-chan result.Event) error {
 }
 
 func (h Handler) send(c *client, in <-chan result.Event) {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	for e := range in {
-		if err := c.send(e); err != nil {
+		if err := c.send(ctx, e); err != nil {
 			log.Println(err)
 		}
 	}
+	cancel()
 }
 
 type client struct {
-	ready     bool
-	url       string
-	exchange  string
-	conn      *amqp.Connection
-	chn       *amqp.Channel
-	chnClosed chan *amqp.Error
-	confirms  chan amqp.Confirmation
+	ready    bool
+	url      string
+	exchange string
+	conn     *amqp.Connection
+	chn      *amqp.Channel
+	confirms chan amqp.Confirmation
 }
 
 func newClient(url, exchange string) *client {
 	return &client{ready: false, url: url, exchange: exchange}
 }
 
-const reconnectDelay = 4 * time.Second
-
-func (c *client) run(ctx context.Context) {
-	for {
-		if err := c.connect(); err != nil {
-			log.Println(err)
-
-			select {
-			case <-time.After(reconnectDelay):
-			case <-ctx.Done():
-				return
-			}
-		} else {
-			c.ready = true
-
-			select {
-			case err := <-c.chnClosed:
-				c.ready = false
-				log.Println(err)
-			case <-ctx.Done():
-				c.ready = false
-				c.conn.Close()
-				return
-			}
-		}
-	}
-}
-
-func (c *client) connect() (err error) {
+func (c *client) connect(ctx context.Context) (err error) {
 	c.conn, err = amqp.Dial(c.url)
 
 	if err != nil {
@@ -120,18 +86,34 @@ func (c *client) connect() (err error) {
 		c.conn.Close()
 		return fmt.Errorf("amqp: failed to put channel in confirmation mode: %s", err)
 	}
-	c.chnClosed = make(chan *amqp.Error)
-	c.chn.NotifyClose(c.chnClosed)
-
 	c.confirms = make(chan amqp.Confirmation)
 	c.chn.NotifyPublish(c.confirms)
+
+	c.ready = true
+
+	chnClosed := make(chan *amqp.Error)
+	c.chn.NotifyClose(chnClosed)
+
+	go func() {
+		select {
+		case err := <-chnClosed:
+			c.ready = false
+			c.conn.Close()
+			log.Println(err)
+		case <-ctx.Done():
+			c.ready = false
+			c.conn.Close()
+		}
+	}()
 
 	return nil
 }
 
-func (c *client) send(e result.Event) error {
+func (c *client) send(ctx context.Context, e result.Event) error {
 	if !c.ready {
-		return fmt.Errorf("amqp: failed to send event: connection closed")
+		if err := c.connect(ctx); err != nil {
+			return err
+		}
 	}
 	body, err := json.Marshal(e)
 
