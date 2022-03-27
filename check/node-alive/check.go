@@ -37,15 +37,22 @@ func New(db check.Database, configure func(interface{}) error) (check.Check, err
 }
 
 func (c Check) Exec() result.Result {
-	event, ok, err := c.db.GetLatestEventByNode(c.NodeName)
+	events, err := c.db.GetEventsByNode(c.NodeName)
 
 	if err != nil {
 		return result.Fail("failed to retreive events: %s", err)
 	}
-	if !ok {
+	if len(events) == 0 {
 		return result.Fail("haven't seen %s at all", c.NodeName)
 	}
-	absenceTime := time.Since(event.Timestamp).Truncate(time.Second)
+	latest := events[0]
+
+	for _, e := range events[1:] {
+		if e.Timestamp.After(latest.Timestamp) {
+			latest = e
+		}
+	}
+	absenceTime := time.Since(latest.Timestamp).Truncate(time.Second)
 
 	if absenceTime > c.MaxAbsenceTime {
 		return result.Fail("haven't seen %s for %s", c.NodeName, absenceTime)
