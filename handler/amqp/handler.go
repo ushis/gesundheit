@@ -57,7 +57,6 @@ type client struct {
 	ready    bool
 	url      string
 	exchange string
-	conn     *amqp.Connection
 	chn      *amqp.Channel
 	confirms chan amqp.Confirmation
 }
@@ -66,46 +65,47 @@ func newClient(url, exchange string) *client {
 	return &client{ready: false, url: url, exchange: exchange}
 }
 
-func (c *client) connect(ctx context.Context) (err error) {
-	c.conn, err = amqp.Dial(c.url)
+func (c *client) connect(ctx context.Context) error {
+	conn, err := amqp.Dial(c.url)
 
 	if err != nil {
 		return fmt.Errorf("amqp: failed to connect: %s", err)
 	}
-	c.chn, err = c.conn.Channel()
+	chn, err := conn.Channel()
 
 	if err != nil {
-		c.conn.Close()
+		conn.Close()
 		return fmt.Errorf("amqp: failed to create channel: %s", err)
 	}
-	if err := c.chn.ExchangeDeclare(c.exchange, "fanout", true, false, false, false, nil); err != nil {
-		c.conn.Close()
+	if err := chn.ExchangeDeclare(c.exchange, "fanout", true, false, false, false, nil); err != nil {
+		conn.Close()
 		return fmt.Errorf("amqp: failed to declare exchange: %s", err)
 	}
-	if err := c.chn.Confirm(false); err != nil {
-		c.conn.Close()
+	if err := chn.Confirm(false); err != nil {
+		conn.Close()
 		return fmt.Errorf("amqp: failed to put channel in confirmation mode: %s", err)
 	}
-	c.confirms = make(chan amqp.Confirmation)
-	c.chn.NotifyPublish(c.confirms)
-
-	c.ready = true
+	confirms := make(chan amqp.Confirmation)
+	chn.NotifyPublish(confirms)
 
 	chnClosed := make(chan *amqp.Error)
-	c.chn.NotifyClose(chnClosed)
+	chn.NotifyClose(chnClosed)
 
 	go func() {
 		select {
 		case err := <-chnClosed:
 			c.ready = false
-			c.conn.Close()
+			conn.Close()
 			log.Println(err)
 		case <-ctx.Done():
 			c.ready = false
-			c.conn.Close()
+			conn.Close()
 		}
 	}()
 
+	c.chn = chn
+	c.confirms = confirms
+	c.ready = true
 	return nil
 }
 
