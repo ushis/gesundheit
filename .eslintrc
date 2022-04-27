@@ -8,5 +8,8 @@
     "defineEmits": "readonly",
     "defineProps": "readonly",
     "withDefaults": "readonly"
+  },
+  "rules": {
+    "vue/multi-word-component-names": "off"
   }
 }
