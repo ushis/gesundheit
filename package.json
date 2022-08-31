@@ -10,7 +10,7 @@
   "dependencies": {
     "bootstrap": "^5.2.0",
     "javascript-time-ago": "^2.5.7",
-    "vue": "^3.2.37"
+    "vue": "^3.2.38"
   },
   "devDependencies": {
     "@babel/types": "^7.18.13",
