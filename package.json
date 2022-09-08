@@ -8,7 +8,7 @@
     "lint": "eslint http/ui/src/**/*.{ts,vue}"
   },
   "dependencies": {
-    "bootstrap": "^5.2.0",
+    "bootstrap": "^5.2.1",
     "javascript-time-ago": "^2.5.7",
     "vue": "^3.2.38"
   },
