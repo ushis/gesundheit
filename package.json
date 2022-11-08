@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "bootstrap": "^5.2.2",
-    "javascript-time-ago": "^2.5.7",
+    "javascript-time-ago": "^2.5.9",
     "vue": "^3.2.41"
   },
   "devDependencies": {
