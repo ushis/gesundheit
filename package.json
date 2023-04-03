@@ -13,7 +13,7 @@
     "vue": "^3.2.47"
   },
   "devDependencies": {
-    "@babel/types": "^7.21.3",
+    "@babel/types": "^7.21.4",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.0",
     "@vitejs/plugin-vue": "^2.3.4",
