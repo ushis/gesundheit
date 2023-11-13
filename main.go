@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -27,6 +26,7 @@ import (
 	_ "github.com/ushis/gesundheit/check/node-alive"
 	_ "github.com/ushis/gesundheit/check/tls-cert"
 	"github.com/ushis/gesundheit/crypto"
+	_ "github.com/ushis/gesundheit/db/filesystem"
 	_ "github.com/ushis/gesundheit/db/memory"
 	_ "github.com/ushis/gesundheit/db/redis"
 	_ "github.com/ushis/gesundheit/filter/office-hours"
@@ -169,7 +169,7 @@ func cmdPubkey(args []string) {
 		flags.Usage()
 		os.Exit(2)
 	}
-	buf, err := ioutil.ReadAll(os.Stdin)
+	buf, err := io.ReadAll(os.Stdin)
 
 	if err != nil {
 		log.Fatalln("failed to read:", err)
