@@ -462,7 +462,7 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>VacuumInterval</td>
       <td>
         Interval in which expired entries are deleted from disk,
-        e.g. <code>"24 hours"</code>
+        e.g. <code>"24h"</code>
       </td>
     </tr>
     <tr>
