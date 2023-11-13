@@ -37,7 +37,7 @@ type Config struct {
 }
 
 func New(configure func(interface{}) error) (db.Database, error) {
-	conf := Config{Directory: ".", VacuumInterval: "24 hours"}
+	conf := Config{Directory: ".", VacuumInterval: "24h"}
 
 	if err := configure(&conf); err != nil {
 		return nil, err
