@@ -1,10 +1,8 @@
 package filesystem
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"log"
 	"os"
@@ -148,23 +146,14 @@ func (db *Database) vacuum() error {
 }
 
 func readEvents(r io.Reader, insertEvent func(result.Event) (bool, error)) error {
-	br := bufio.NewReader(r)
+	decoder := json.NewDecoder(r)
 
 	for {
-		line, err := br.ReadSlice('\n')
-
-		if err != nil {
-			if err != io.EOF {
-				return err
-			}
-			if len(line) > 0 {
-				return errors.New("invalid database log")
-			}
-			return nil
-		}
 		event := result.Event{}
 
-		if err := json.Unmarshal(line[:len(line)-1], &event); err != nil {
+		if err := decoder.Decode(&event); err == io.EOF {
+			return nil
+		} else if err != nil {
 			return err
 		}
 		if _, err := insertEvent(event); err != nil {
