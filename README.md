@@ -453,6 +453,19 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
   </thead>
   <tbody>
     <tr>
+      <td rowspan="2"><strong>filesystem</strong></td>
+      <td rowspan="2">Simple filesystem baked database suitable for most setups.</td>
+      <td>Directory</td>
+      <td>Database directory, e.g. <code>"/var/lib/gesundheit"</td>
+    </tr>
+    <tr>
+      <td>VacuumInterval</td>
+      <td>
+        Interval in which expired entries are deleted from disk,
+        e.g. <code>"24 hours"
+      </td>
+    </tr>
+    <tr>
       <td><strong>memory</strong></td>
       <td>
         In memory database suitable for simple setups and nodes
