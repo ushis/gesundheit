@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/itchyny/gojq v0.12.7
 	github.com/streadway/amqp v1.0.0
-	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
+	golang.org/x/crypto v0.14.0
 )
 
 require (
@@ -18,6 +18,6 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 )
