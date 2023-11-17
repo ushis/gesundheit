@@ -91,14 +91,21 @@ func (db *Database) GetEvents() ([]result.Event, error) {
 	return db.db.GetEvents()
 }
 
-func (db *Database) GetEventsByNode(name string) ([]result.Event, error) {
-	return db.db.GetEventsByNode(name)
+func (db *Database) GetEventsByNode(nodeName string) ([]result.Event, error) {
+	return db.db.GetEventsByNode(nodeName)
+}
+
+func (db *Database) GetEventsByCheck(nodeName, checkId string) ([]result.Event, error) {
+	return db.db.GetEventsByCheck(nodeName, checkId)
 }
 
 func (db *Database) autoVacuum(ctx context.Context) {
+	ticker := time.NewTicker(db.vacuumInterval)
+	defer ticker.Stop()
+
 	for {
 		select {
-		case <-time.After(db.vacuumInterval):
+		case <-ticker.C:
 		case <-ctx.Done():
 			return
 		}

@@ -14,11 +14,11 @@ func init() {
 
 type Database struct {
 	*sync.RWMutex
-	db map[string]map[string]result.Event
+	db map[string]map[string]*cappedList[result.Event]
 }
 
 func New(_ func(interface{}) error) (db.Database, error) {
-	return Database{&sync.RWMutex{}, make(map[string]map[string]result.Event)}, nil
+	return Database{&sync.RWMutex{}, make(map[string]map[string]*cappedList[result.Event])}, nil
 }
 
 func (db Database) Close() error {
@@ -32,16 +32,22 @@ func (db Database) InsertEvent(e result.Event) (bool, error) {
 	checks, ok := db.db[e.NodeName]
 
 	if !ok {
-		db.db[e.NodeName] = map[string]result.Event{e.CheckId: e}
-		return true, nil
+		checks = map[string]*cappedList[result.Event]{}
+		db.db[e.NodeName] = checks
 	}
-	prevE, ok := checks[e.CheckId]
+	events, ok := checks[e.CheckId]
 
-	if !ok || prevE.Id != e.Id {
-		checks[e.CheckId] = e
-		return true, nil
+	if !ok {
+		events = &cappedList[result.Event]{}
+		checks[e.CheckId] = events
 	}
-	return false, nil
+	for _, prevEvent := range events.slice() {
+		if prevEvent.Id == e.Id {
+			return false, nil
+		}
+	}
+	events.push(e)
+	return true, nil
 }
 
 func (db Database) GetEvents() ([]result.Event, error) {
@@ -49,34 +55,94 @@ func (db Database) GetEvents() ([]result.Event, error) {
 	defer db.RUnlock()
 
 	now := time.Now()
-	events := []result.Event{}
+	result := []result.Event{}
 
 	for _, checks := range db.db {
-		for _, event := range checks {
-			if event.ExpiresAt.After(now) {
-				events = append(events, event)
+		for _, events := range checks {
+			for _, event := range events.slice() {
+				if event.ExpiresAt.After(now) {
+					result = append(result, event)
+				}
 			}
 		}
 	}
-	return events, nil
+	return result, nil
 }
 
-func (db Database) GetEventsByNode(name string) ([]result.Event, error) {
+func (db Database) GetEventsByNode(nodeName string) ([]result.Event, error) {
 	db.RLock()
 	defer db.RUnlock()
 
-	checks, ok := db.db[name]
+	checks, ok := db.db[nodeName]
 
 	if !ok {
 		return []result.Event{}, nil
 	}
 	now := time.Now()
-	events := []result.Event{}
+	result := []result.Event{}
 
-	for _, event := range checks {
-		if event.ExpiresAt.After(now) {
-			events = append(events, event)
+	for _, events := range checks {
+		for _, event := range events.slice() {
+			if event.ExpiresAt.After(now) {
+				result = append(result, event)
+			}
 		}
 	}
-	return events, nil
+	return result, nil
+}
+
+func (db Database) GetEventsByCheck(nodeName, checkId string) ([]result.Event, error) {
+	db.RLock()
+	defer db.RUnlock()
+
+	checks, ok := db.db[nodeName]
+
+	if !ok {
+		return []result.Event{}, nil
+	}
+	events, ok := checks[checkId]
+
+	if !ok {
+		return []result.Event{}, nil
+	}
+	now := time.Now()
+	result := []result.Event{}
+
+	for _, event := range events.slice() {
+		if event.ExpiresAt.After(now) {
+			result = append(result, event)
+		}
+	}
+	return result, nil
+}
+
+const cappedListBufLen = 64
+const cappedListCap = 6
+
+type cappedList[T any] struct {
+	buffer [cappedListBufLen]T
+	offset int
+	length int
+}
+
+func (l *cappedList[T]) push(v T) {
+	index := l.offset + l.length
+
+	if index >= len(l.buffer) {
+		copy(l.buffer[:], l.buffer[l.offset+1:])
+		l.offset = 0
+		l.length -= 1
+		index = l.length
+	}
+	l.buffer[index] = v
+
+	if l.length < cappedListCap {
+		l.length += 1
+	} else {
+		l.offset += 1
+	}
+}
+
+func (l *cappedList[T]) slice() []T {
+	return l.buffer[l.offset : l.offset+l.length]
 }
