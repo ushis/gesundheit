@@ -27,10 +27,10 @@ func init() {
 
 // Database Layout
 //
-// nodes                            				set<nodeName>
+// nodes                                    set<nodeName>
 // nodes:<nodename>:checks                  set<checkId>
-// nodes:<nodename>:checks:<checkId>:events	list<eventId>
-// events:<eventId>          								event
+// nodes:<nodename>:checks:<checkId>:events list<eventId>
+// events:<eventId>                         event
 func New(configure func(interface{}) error) (db.Database, error) {
 	conf := Config{}
 
