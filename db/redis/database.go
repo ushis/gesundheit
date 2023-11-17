@@ -27,10 +27,10 @@ func init() {
 
 // Database Layout
 //
-// nodes                          set<nodeName>
-// nodes:<nodename>:events        hash<checkId, eventId>
-// events:<eventId>               event
-//
+// nodes                                    set<nodeName>
+// nodes:<nodename>:checks                  set<checkId>
+// nodes:<nodename>:checks:<checkId>:events list<eventId>
+// events:<eventId>                         event
 func New(configure func(interface{}) error) (db.Database, error) {
 	conf := Config{}
 
@@ -62,9 +62,17 @@ func (db Database) InsertEvent(e result.Event) (bool, error) {
 	if ok, err := db.rdb.SetNX(db.rdb.Context(), key, val, ttl).Result(); !ok || err != nil {
 		return ok, err
 	}
-	key = mkkey("nodes", e.NodeName, "events")
+	key = mkkey("nodes", e.NodeName, "checks", e.CheckId, "events")
 
-	if err := db.rdb.HSet(db.rdb.Context(), key, e.CheckId, e.Id).Err(); err != nil {
+	if err := db.rdb.RPush(db.rdb.Context(), key, e.Id).Err(); err != nil {
+		return true, err
+	}
+	if err := db.rdb.LTrim(db.rdb.Context(), key, -6, -1).Err(); err != nil {
+		return true, err
+	}
+	key = mkkey("nodes", e.NodeName, "checks")
+
+	if err := db.rdb.SAdd(db.rdb.Context(), key, e.CheckId).Err(); err != nil {
 		return true, err
 	}
 	key = mkkey("nodes")
@@ -72,8 +80,9 @@ func (db Database) InsertEvent(e result.Event) (bool, error) {
 	return true, db.rdb.SAdd(db.rdb.Context(), key, e.NodeName).Err()
 }
 
-func (db Database) GetEventsByNode(name string) ([]result.Event, error) {
-	ids, err := db.rdb.HVals(db.rdb.Context(), mkkey("nodes", name, "events")).Result()
+func (db Database) GetEventsByCheck(nodeName, checkId string) ([]result.Event, error) {
+	key := mkkey("nodes", nodeName, "checks", checkId, "events")
+	ids, err := db.rdb.LRange(db.rdb.Context(), key, 0, -1).Result()
 
 	if err != nil {
 		return nil, err
@@ -108,16 +117,37 @@ func (db Database) GetEventsByNode(name string) ([]result.Event, error) {
 	return events[:i], nil
 }
 
-func (db Database) GetEvents() ([]result.Event, error) {
-	nodes, err := db.rdb.SMembers(db.rdb.Context(), mkkey("nodes")).Result()
+func (db Database) GetEventsByNode(nodeName string) ([]result.Event, error) {
+	key := mkkey("nodes", nodeName, "checks")
+	checkIds, err := db.rdb.SMembers(db.rdb.Context(), key).Result()
 
 	if err != nil {
 		return nil, err
 	}
 	events := []result.Event{}
 
-	for _, node := range nodes {
-		nodeEvents, err := db.GetEventsByNode(node)
+	for _, checkId := range checkIds {
+		checkEvents, err := db.GetEventsByCheck(nodeName, checkId)
+
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, checkEvents...)
+	}
+	return events, nil
+}
+
+func (db Database) GetEvents() ([]result.Event, error) {
+	key := mkkey("nodes")
+	nodeNames, err := db.rdb.SMembers(db.rdb.Context(), key).Result()
+
+	if err != nil {
+		return nil, err
+	}
+	events := []result.Event{}
+
+	for _, nodeName := range nodeNames {
+		nodeEvents, err := db.GetEventsByNode(nodeName)
 
 		if err != nil {
 			return nil, err

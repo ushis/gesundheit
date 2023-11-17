@@ -7,7 +7,6 @@ type Event struct {
 	CheckId          string
 	CheckDescription string
 	CheckInterval    uint64
-	StatusHistory    StatusHistory
 	Id               string
 	Status           Status
 	Message          string

@@ -222,7 +222,7 @@ func (l modConfLoader) loadFilter(conf *filterConfig, path string, meta toml.Met
 	if err != nil {
 		return nil, err
 	}
-	return fn(func(cfg interface{}) error {
+	return fn(l.db, func(cfg interface{}) error {
 		return meta.PrimitiveDecode(conf.Config, cfg)
 	})
 }

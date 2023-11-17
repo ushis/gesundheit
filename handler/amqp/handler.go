@@ -7,7 +7,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/ushis/gesundheit/handler"
 	"github.com/ushis/gesundheit/result"
 )

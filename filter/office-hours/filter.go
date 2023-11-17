@@ -6,8 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ushis/gesundheit/result"
+	"github.com/ushis/gesundheit/db"
 	"github.com/ushis/gesundheit/filter"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Filter struct {
@@ -18,7 +19,7 @@ func init() {
 	filter.Register("office-hours", New)
 }
 
-func New(configure func(interface{}) error) (filter.Filter, error) {
+func New(_ db.Database, configure func(interface{}) error) (filter.Filter, error) {
 	f := Filter{}
 
 	if err := configure(&f); err != nil {

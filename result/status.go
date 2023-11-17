@@ -13,16 +13,3 @@ func (s Status) String() string {
 	}
 	return "FAIL"
 }
-
-type StatusHistory uint32
-
-func (h *StatusHistory) Append(s Status) {
-	if s > 1 {
-		panic("status out of bounds")
-	}
-	*h = (*h << 1) | StatusHistory(s)
-}
-
-func (h *StatusHistory) Last() Status {
-	return Status(*h & 1)
-}
