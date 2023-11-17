@@ -2,9 +2,11 @@ package filter
 
 import (
 	"errors"
+
+	"github.com/ushis/gesundheit/db"
 )
 
-type FilterFunc func(func(interface{}) error) (Filter, error)
+type FilterFunc func(db.Database, func(interface{}) error) (Filter, error)
 
 type Registry map[string]FilterFunc
 

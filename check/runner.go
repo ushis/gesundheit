@@ -51,9 +51,6 @@ func (r Runner) run(ctx context.Context, events chan<- result.Event) {
 	case <-ctx.Done():
 		return
 	}
-	statusHistory := result.StatusHistory(result.StatusOK)
-	checkInterval := uint64(interval / time.Second)
-
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -64,16 +61,13 @@ func (r Runner) run(ctx context.Context, events chan<- result.Event) {
 			NodeName:         r.node.Name,
 			CheckId:          r.id,
 			CheckDescription: r.description,
-			CheckInterval:    checkInterval,
-			StatusHistory:    statusHistory,
+			CheckInterval:    uint64(interval / time.Second),
 			Id:               uuid.New().String(),
 			Status:           res.Status,
 			Message:          res.Message,
 			Timestamp:        time.Now(),
 			ExpiresAt:        time.Now().Add(3 * interval),
 		}
-		statusHistory.Append(res.Status)
-
 		select {
 		case events <- event:
 		case <-ctx.Done():
