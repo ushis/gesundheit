@@ -8,9 +8,9 @@ import (
 	"net"
 	"sync"
 
-	"github.com/ushis/gesundheit/result"
 	"github.com/ushis/gesundheit/crypto"
 	"github.com/ushis/gesundheit/input"
+	"github.com/ushis/gesundheit/result"
 )
 
 type Input struct {
@@ -106,7 +106,7 @@ func (i Input) serve(conn net.PacketConn, events chan<- result.Event) {
 }
 
 func (i Input) decodePacket(buf, packet []byte) (e result.Event, err error) {
-	plaintext, err := i.decryptPacket(buf[:0], packet)
+	plaintext, err := i.decryptPacket(buf, packet)
 
 	if err != nil {
 		return e, err

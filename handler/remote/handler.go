@@ -1,7 +1,6 @@
 package remote
 
 import (
-	"bytes"
 	"encoding/json"
 	"net"
 
@@ -55,12 +54,12 @@ func New(configure func(interface{}) error) (handler.Simple, error) {
 }
 
 func (h Handler) Handle(e result.Event) error {
-	buf := bytes.NewBuffer(nil)
+	buf, err := json.Marshal(e)
 
-	if err := json.NewEncoder(buf).Encode(e); err != nil {
+	if err != nil {
 		return err
 	}
-	ciphertext, err := crypto.Encrypt(h.Cipher, buf.Bytes())
+	ciphertext, err := crypto.Encrypt(h.Cipher, buf)
 
 	if err != nil {
 		return err
