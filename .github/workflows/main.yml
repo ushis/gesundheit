@@ -29,7 +29,7 @@ jobs:
           yarn build
       - run: |
           go build -v -a -o gesundheit .
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: gesundheit-${{ matrix.arch }}
           path: gesundheit
@@ -146,7 +146,7 @@ jobs:
           sudo install -Dm644 src/pkg/gesundheit.toml     gesundheit/etc/gesundheit/gesundheit.toml
           sudo install -dm755                             gesundheit/etc/gesundheit/modules.d
           dpkg-deb --build gesundheit "gesundheit_${GITHUB_REF_NAME}_${{ matrix.arch }}.deb"
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: "deb-${{ matrix.arch }}"
           path: "*.deb"
