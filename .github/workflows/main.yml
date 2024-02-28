@@ -15,7 +15,7 @@ jobs:
       GOFLAGS: "-trimpath -mod=readonly -modcacherw"
       CGO_ENABLED: "0"
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v4"
       - uses: "actions/setup-node@v2"
         with:
           node-version: '16'
@@ -94,7 +94,7 @@ jobs:
         with:
           name: gesundheit-${{ steps.goarch.outputs.GOARCH }}
           path: build
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v4"
         with:
           path: src
       - run: |
@@ -131,7 +131,7 @@ jobs:
         with:
           name: gesundheit-${{ steps.goarch.outputs.GOARCH }}
           path: bin
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v4"
         with:
           path: src
       - run: |
