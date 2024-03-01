@@ -143,6 +143,24 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
       <td>Min available space considered healthy, e.g. <code>"1G"</code></td>
     </tr>
     <tr>
+      <td rowspan="4"><strong>dns-record</strong></td>
+      <td rowspan="4">Check DNS record</td>
+      <td>Address</td>
+      <td>DNS server address, e.g. <code>"127.0.0.1:53"</code></td>
+    </tr>
+    <tr>
+      <td>Type</td>
+      <td>Record type, e.g. <code>"A"</code></td>
+    </tr>
+    <tr>
+      <td>Name</td>
+      <td>Name to lookup, e.g. <code>"example.com"</code></td>
+    </tr>
+    <tr>
+      <td>Value</td>
+      <td>Expected value, e.g. <code>"1.1.1.1"</code></td>
+    </tr>
+    <tr>
       <td rowspan="2"><strong>exec</strong></td>
       <td rowspan="2">Execute check command</td>
       <td>Command</td>
