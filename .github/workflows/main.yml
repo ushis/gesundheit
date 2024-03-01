@@ -74,13 +74,12 @@ jobs:
     env:
       CARCH: ${{ matrix.arch }}
     steps:
-      - id: goarch
-        run: |
+      - run: |
           case "${{ matrix.arch }}" in
-            "x86_64") echo "::set-output name=GOARCH::amd64";;
-            "armv7h") echo "::set-output name=GOARCH::arm";;
-            "aarch64") echo "::set-output name=GOARCH::arm64";;
-            *) echo "::set-output name=GOARCH::${{ matrix.arch }}";;
+            "x86_64") echo "GOARCH=amd64" >> "${GITHUB_ENV}";;
+            "armv7h") echo "GOARCH=arm" >> "${GITHUB_ENV}";;
+            "aarch64") echo "GOARCH=arm64" >> "${GITHUB_ENV}";;
+            *) echo "GOARCH=${{ matrix.arch }}" >> "${GITHUB_ENV}";;
           esac
       - run: |
           pacman -Syu --noconfirm
@@ -92,7 +91,7 @@ jobs:
           PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
       - uses: actions/download-artifact@v4
         with:
-          name: gesundheit-${{ steps.goarch.outputs.GOARCH }}
+          name: gesundheit-${{ env.GOARCH }}
           path: build
       - uses: "actions/checkout@v4"
         with:
@@ -120,16 +119,15 @@ jobs:
       matrix:
         arch: ["i386", "amd64", "armhf", "arm64"]
     steps:
-      - id: goarch
-        run: |
+      - run: |
           case "${{ matrix.arch }}" in
-            "i386") echo "::set-output name=GOARCH::386";;
-            "armhf") echo "::set-output name=GOARCH::arm";;
-            *) echo "::set-output name=GOARCH::${{ matrix.arch }}";;
+            "i386") echo "GOARCH=386" >> "${GITHUB_ENV}";;
+            "armhf") echo "GOARCH=arm" >> "${GITHUB_ENV}";;
+            *) echo "GOARCH=${{ matrix.arch }}" >> "${GITHUB_ENV}";;
           esac
       - uses: actions/download-artifact@v4
         with:
-          name: gesundheit-${{ steps.goarch.outputs.GOARCH }}
+          name: gesundheit-${{ env.GOARCH }}
           path: bin
       - uses: "actions/checkout@v4"
         with:

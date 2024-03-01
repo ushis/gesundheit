@@ -45,13 +45,13 @@ func (c Check) Exec() result.Result {
 	}
 	for _, r := range records {
 		if r == c.Value {
-			return result.OK("%s %s resolves to %s", c.Type, c.Name, c.Value)
+			return result.OK("%s %s resolves to %#v", c.Type, c.Name, c.Value)
 		}
 	}
 	if len(records) == 0 {
 		return result.Fail("could not find any records for %s %s", c.Type, c.Name)
 	}
-	return result.Fail("%s %s resolves to %s", c.Type, c.Name, records[0])
+	return result.Fail("%s %s resolves to %#v", c.Type, c.Name, records[0])
 }
 
 func resolver(addr string) *net.Resolver {
