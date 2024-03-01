@@ -1,4 +1,4 @@
-package filemtime
+package dnsrecord
 
 import (
 	"context"
@@ -11,11 +11,17 @@ import (
 	"github.com/ushis/gesundheit/result"
 )
 
-type Check struct {
+type Config struct {
 	Address string
 	Type    string
 	Name    string
 	Value   string
+}
+
+type Check struct {
+	conf     Config
+	resolver *net.Resolver
+	lookup   func(*net.Resolver, string) ([]string, error)
 }
 
 func init() {
@@ -23,41 +29,55 @@ func init() {
 }
 
 func New(_ check.Database, configure func(interface{}) error) (check.Check, error) {
-	check := Check{}
+	conf := Config{}
 
-	if err := configure(&check); err != nil {
+	if err := configure(&conf); err != nil {
 		return nil, err
 	}
-	if check.Type == "" {
-		return nil, errors.New("missing Type")
-	}
-	if check.Name == "" {
+	if conf.Name == "" {
 		return nil, errors.New("missing Name")
+	}
+	check := Check{conf: conf}
+
+	if conf.Address == "" {
+		check.resolver = net.DefaultResolver
+	} else {
+		check.resolver = resolver(conf.Address)
+	}
+
+	switch conf.Type {
+	case "A":
+		check.lookup = lookupA
+	case "AAAA":
+		check.lookup = lookupAAAA
+	case "CNAME":
+		check.lookup = lookupCNAME
+	case "TXT":
+		check.lookup = lookupTXT
+	default:
+		return nil, fmt.Errorf("unsupported record type: %#v", conf.Type)
 	}
 	return check, nil
 }
 
 func (c Check) Exec() result.Result {
-	records, err := lookup(resolver(c.Address), c.Type, c.Name)
+	records, err := c.lookup(c.resolver, c.conf.Name)
 
 	if err != nil {
-		return result.Fail("failed to lookup %s: %s", c.Name, err)
+		return result.Fail("failed to lookup %s: %s", c.conf.Name, err)
 	}
 	for _, r := range records {
-		if r == c.Value {
-			return result.OK("%s %s resolves to %#v", c.Type, c.Name, c.Value)
+		if r == c.conf.Value {
+			return result.OK("%s %s resolves to %#v", c.conf.Type, c.conf.Name, c.conf.Value)
 		}
 	}
 	if len(records) == 0 {
-		return result.Fail("could not find any records for %s %s", c.Type, c.Name)
+		return result.Fail("could not find any records for %s %s", c.conf.Type, c.conf.Name)
 	}
-	return result.Fail("%s %s resolves to %#v", c.Type, c.Name, records[0])
+	return result.Fail("%s %s resolves to %#v", c.conf.Type, c.conf.Name, records[0])
 }
 
 func resolver(addr string) *net.Resolver {
-	if addr == "" {
-		return net.DefaultResolver
-	}
 	d := &net.Dialer{Timeout: time.Second}
 
 	return &net.Resolver{
@@ -68,34 +88,35 @@ func resolver(addr string) *net.Resolver {
 	}
 }
 
-func lookup(r *net.Resolver, typ, name string) (result []string, err error) {
-	switch typ {
-	case "A":
-		records, err := r.LookupIP(context.Background(), "ip4", name)
+func lookupA(r *net.Resolver, name string) ([]string, error) {
+	records, err := r.LookupIP(context.Background(), "ip4", name)
 
-		if err != nil {
-			return nil, err
-		}
-		return mapToStrings(records), nil
-	case "AAAA":
-		records, err := r.LookupIP(context.Background(), "ip6", name)
-
-		if err != nil {
-			return nil, err
-		}
-		return mapToStrings(records), nil
-	case "CNAME":
-		record, err := r.LookupCNAME(context.Background(), name)
-
-		if err != nil {
-			return nil, err
-		}
-		return []string{record}, nil
-	case "TXT":
-		return r.LookupTXT(context.Background(), name)
-	default:
-		return nil, fmt.Errorf("unsupported record type: %s", typ)
+	if err != nil {
+		return nil, err
 	}
+	return mapToStrings(records), nil
+}
+
+func lookupAAAA(r *net.Resolver, name string) ([]string, error) {
+	records, err := r.LookupIP(context.Background(), "ip6", name)
+
+	if err != nil {
+		return nil, err
+	}
+	return mapToStrings(records), nil
+}
+
+func lookupCNAME(r *net.Resolver, name string) ([]string, error) {
+	record, err := r.LookupCNAME(context.Background(), name)
+
+	if err != nil {
+		return nil, err
+	}
+	return []string{record}, nil
+}
+
+func lookupTXT(r *net.Resolver, name string) ([]string, error) {
+	return r.LookupTXT(context.Background(), name)
 }
 
 func mapToStrings[T fmt.Stringer](values []T) []string {
