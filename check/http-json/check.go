@@ -77,6 +77,10 @@ func isEqual(val interface{}, res gjson.Result) bool {
 	switch v := val.(type) {
 	case int:
 		return int64(v) == res.Int()
+	case int32:
+		return int64(v) == res.Int()
+	case int64:
+		return v == res.Int()
 	case float32:
 		return float64(v) == res.Float()
 	default:
