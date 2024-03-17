@@ -227,8 +227,8 @@ gesundheit -conf /etc/gesundheit/gesundheit.toml
     <tr>
       <td>Query</td>
       <td>
-        <a href="https://stedolan.github.io/jq/">jq</a> compatible query string,
-        e.g. <code>".status"</code>
+        <a href="https://gjson.dev/">GJSON</a> compatible query string,
+        e.g. <code>"status"</code>
       </td>
     </tr>
     <tr>
