@@ -1,10 +1,10 @@
 package mtime
 
 import (
-	"encoding/json"
 	"errors"
+	"io"
 
-	"github.com/itchyny/gojq"
+	"github.com/tidwall/gjson"
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/check/http"
 	"github.com/ushis/gesundheit/result"
@@ -12,7 +12,7 @@ import (
 
 type Check struct {
 	HttpConf http.Config
-	Query    *gojq.Query
+	Query    string
 	Value    interface{}
 }
 
@@ -41,15 +41,7 @@ func New(_ check.Database, configure func(interface{}) error) (check.Check, erro
 	if conf.Value == nil {
 		return nil, errors.New("missing Value")
 	}
-	query, err := gojq.Parse(conf.Query)
-
-	if err != nil {
-		return nil, err
-	}
-	if n, ok := conf.Value.(int); ok {
-		conf.Value = int64(n)
-	}
-	return &Check{HttpConf: conf.Config, Query: query, Value: conf.Value}, nil
+	return &Check{HttpConf: conf.Config, Query: conf.Query, Value: conf.Value}, nil
 }
 
 func (c Check) Exec() result.Result {
@@ -60,32 +52,34 @@ func (c Check) Exec() result.Result {
 	}
 	defer resp.Body.Close()
 
-	body := make(map[string]interface{})
+	body, err := io.ReadAll(resp.Body)
 
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return result.Fail("failed to decode response: %s", err.Error())
+	if err != nil {
+		return result.Fail("failed to read response body: %s", err.Error())
 	}
-	iter := c.Query.Run(body)
-	n := 0
+	results := gjson.GetManyBytes(body, c.Query)
 
-	for {
-		v, ok := iter.Next()
+	if len(results) == 0 {
+		return result.Fail("%s -> \"%s\" returned no values", c.HttpConf, c.Query)
+	}
+	if len(results) > 1 {
+		return result.Fail("%s -> \"%s\" returned multiple values", c.HttpConf, c.Query)
+	}
+	res := results[0]
 
-		if !ok {
-			if n == 0 {
-				return result.Fail("%s -> \"%s\" returned no values", c.HttpConf, c.Query)
-			}
-			return result.OK("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, c.Value)
-		}
-		if n > 1 {
-			return result.Fail("%s -> \"%s\" returned multiple values", c.HttpConf, c.Query)
-		}
-		if n, ok := v.(int); ok {
-			v = int64(n)
-		}
-		if v != c.Value {
-			return result.Fail("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, v)
-		}
-		n += 1
+	if isEqual(c.Value, res) {
+		return result.OK("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, c.Value)
+	}
+	return result.Fail("%s -> \"%s\" returned %#v", c.HttpConf, c.Query, res.Value())
+}
+
+func isEqual(val interface{}, res gjson.Result) bool {
+	switch v := val.(type) {
+	case int:
+		return int64(v) == res.Int()
+	case float32:
+		return float64(v) == res.Float()
+	default:
+		return v == res.Value()
 	}
 }
