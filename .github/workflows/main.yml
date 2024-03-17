@@ -59,7 +59,7 @@ jobs:
           for d in bin/*; do
             mv "${d}/gesundheit" "gesundheit-${GITHUB_REF_NAME}-${d##*/}"
           done
-      - uses: "softprops/action-gh-release@v1"
+      - uses: "softprops/action-gh-release@v2"
         with:
           files: "gesundheit-*"
 
