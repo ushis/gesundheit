@@ -94,6 +94,10 @@ Module = "log"
 #   chown root:gesundheit /etc/gesundheit/modules.d/*.toml
 #   chmod 0640 /etc/gesundheit/modules.d/*.toml
 #
+# It is also possible to inject secrets via environment variables.
+#
+#   Token = "${GOTIFY_TOKEN}"
+#
 [Handler]
 Module = "gotify"
 
