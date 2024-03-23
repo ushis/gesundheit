@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/compose-spec/compose-go/template"
+	"github.com/compose-spec/compose-go/utils"
 	"github.com/ushis/gesundheit/check"
 	"github.com/ushis/gesundheit/db"
 	"github.com/ushis/gesundheit/filter"
@@ -79,10 +81,10 @@ func loadConf(path string) (config, db.Database, *http.Server, error) {
 		Database: databaseConfig{Module: "memory"},
 		Modules:  modulesConfig{Config: "modules.d/*.toml"},
 	}
-	meta, err := toml.DecodeFile(path, &conf)
+	meta, err := loadFile(path, &conf)
 
 	if err != nil {
-		return conf, nil, nil, err
+		return conf, nil, nil, fmt.Errorf("failed to load config: %s: %s", path, err)
 	}
 	dbFunc, err := db.Get(conf.Database.Module)
 
@@ -141,10 +143,10 @@ func (l modConfLoader) loadAll(glob string) error {
 
 func (l modConfLoader) load(path string) error {
 	mod := modConfig{}
-	meta, err := toml.DecodeFile(path, &mod)
+	meta, err := loadFile(path, &mod)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load module config: %s: %s", path, err)
 	}
 	if mod.Check != nil {
 		return l.loadCheck(mod.Check, path, meta)
@@ -201,7 +203,7 @@ func (l modConfLoader) loadHandler(conf *handlerConfig, path string, meta toml.M
 	filters := []filter.Filter{}
 
 	for _, cfg := range conf.Filter {
-		f, err := l.loadFilter(cfg, path, meta)
+		f, err := l.loadFilter(cfg, meta)
 
 		if err != nil {
 			return fmt.Errorf("failed to load handler config: %s: %s", path, err.Error())
@@ -216,7 +218,7 @@ func (l modConfLoader) loadHandler(conf *handlerConfig, path string, meta toml.M
 	return nil
 }
 
-func (l modConfLoader) loadFilter(conf *filterConfig, path string, meta toml.MetaData) (filter.Filter, error) {
+func (l modConfLoader) loadFilter(conf *filterConfig, meta toml.MetaData) (filter.Filter, error) {
 	fn, err := filter.Get(conf.Module)
 
 	if err != nil {
@@ -245,4 +247,28 @@ func (l modConfLoader) loadInput(conf *inputConfig, path string, meta toml.MetaD
 	l.hub.registerProducer(in)
 
 	return nil
+}
+
+func loadFile(path string, v interface{}) (toml.MetaData, error) {
+	contents, err := os.ReadFile(path)
+
+	if err != nil {
+		return toml.MetaData{}, err
+	}
+	s, err := substitueEnv(string(contents))
+
+	if err != nil {
+		return toml.MetaData{}, err
+	}
+	return toml.Decode(s, v)
+}
+
+func substitueEnv(s string) (string, error) {
+	env := utils.GetAsEqualsMap(os.Environ())
+
+	mapping := func(key string) (string, bool) {
+		v, ok := env[key]
+		return v, ok
+	}
+	return template.SubstituteWithOptions(s, mapping, template.WithoutLogging)
 }
