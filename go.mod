@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/tidwall/gjson v1.17.1
-	golang.org/x/crypto v0.20.0
+	golang.org/x/crypto v0.31.0
 )
 
 require (
@@ -19,5 +19,5 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 )
