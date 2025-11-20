@@ -39,19 +39,19 @@ jobs:
     needs: [build]
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: gesundheit-386
           path: bin/386
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: gesundheit-amd64
           path: bin/amd64
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: gesundheit-arm
           path: bin/arm
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: gesundheit-arm64
           path: bin/arm64
@@ -89,7 +89,7 @@ jobs:
           echo -n "${PACKAGE_SIGNING_KEY}" | su build -c "gpg --import"
         env:
           PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: gesundheit-${{ env.GOARCH }}
           path: build
@@ -125,7 +125,7 @@ jobs:
             "armhf") echo "GOARCH=arm" >> "${GITHUB_ENV}";;
             *) echo "GOARCH=${{ matrix.arch }}" >> "${GITHUB_ENV}";;
           esac
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: gesundheit-${{ env.GOARCH }}
           path: bin
@@ -154,16 +154,16 @@ jobs:
     needs: [deb]
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: deb-i386
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: deb-amd64
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: deb-armhf
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: deb-arm64
       - run: |
